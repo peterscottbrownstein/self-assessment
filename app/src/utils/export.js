@@ -1,5 +1,33 @@
 import { PILLARS, RATINGS } from '../data/pillars';
 
+const BACKUP_VERSION = 1;
+
+function downloadFile(contents, mimeType, filename) {
+  const blob = new Blob([contents], { type: mimeType });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = filename;
+  a.click();
+  URL.revokeObjectURL(a.href);
+}
+
+export function exportAssessmentData(assessmentState, savedAt) {
+  const today = new Date().toISOString().split('T')[0];
+  const payload = {
+    app: 'doe-self-assessment',
+    version: BACKUP_VERSION,
+    exportedAt: new Date().toISOString(),
+    savedAt,
+    state: assessmentState,
+  };
+
+  downloadFile(
+    JSON.stringify(payload, null, 2),
+    'application/json',
+    `doe-self-assessment-backup-${today}.json`
+  );
+}
+
 export function exportMarkdown(assessmentState) {
   const today = new Date().toISOString().split('T')[0];
   const counts = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0, null: 0 };
@@ -41,10 +69,5 @@ export function exportMarkdown(assessmentState) {
   });
   if (counts[null]) lines.push(`- **Unrated:** ${counts[null]}`);
 
-  const blob = new Blob([lines.join('\n')], { type: 'text/markdown' });
-  const a = document.createElement('a');
-  a.href = URL.createObjectURL(blob);
-  a.download = `doe-self-assessment-${today}.md`;
-  a.click();
-  URL.revokeObjectURL(a.href);
+  downloadFile(lines.join('\n'), 'text/markdown', `doe-self-assessment-${today}.md`);
 }
