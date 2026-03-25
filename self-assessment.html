@@ -1,0 +1,564 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Director of Engineering — Self Assessment</title>
+<style>
+  :root {
+    --r1: #d9534f; --r1-light: #fdf2f2;
+    --r2: #e8833a; --r2-light: #fef6f0;
+    --r3: #f0ad4e; --r3-light: #fffbf0;
+    --r4: #5cb85c; --r4-light: #f2faf2;
+    --r5: #2e7d32; --r5-light: #edf7ed;
+    --border: #e0e4ea;
+    --bg: #f4f6f9;
+    --card: #ffffff;
+    --text: #1a2332;
+    --muted: #6b7a90;
+    --pillar-bg: #1a2332;
+    --pillar-text: #ffffff;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); line-height: 1.5; }
+
+  /* HEADER */
+  .site-header {
+    background: var(--pillar-bg); color: white;
+    padding: 24px 32px; position: sticky; top: 0; z-index: 100;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.25);
+    display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap;
+  }
+  .site-header h1 { font-size: 1.1rem; font-weight: 700; letter-spacing: 0.02em; }
+  .site-header p { font-size: 0.8rem; color: #a0aec0; margin-top: 2px; }
+  .header-actions { display: flex; gap: 10px; flex-shrink: 0; }
+  .btn { padding: 8px 16px; border-radius: 6px; border: none; cursor: pointer; font-size: 0.82rem; font-weight: 600; transition: all 0.15s; }
+  .btn-save { background: #4a90d9; color: white; }
+  .btn-save:hover { background: #357abd; }
+  .btn-export { background: #3d8b6a; color: white; }
+  .btn-export:hover { background: #2f6e53; }
+  .btn-reset { background: transparent; color: #a0aec0; border: 1px solid #4a5568; }
+  .btn-reset:hover { background: #2d3748; color: white; }
+  .save-indicator { font-size: 0.75rem; color: #68d391; opacity: 0; transition: opacity 0.4s; align-self: center; }
+  .save-indicator.show { opacity: 1; }
+
+  /* SUMMARY */
+  .summary-bar {
+    background: white; border-bottom: 1px solid var(--border);
+    padding: 16px 32px; display: flex; align-items: center; gap: 24px; flex-wrap: wrap;
+  }
+  .summary-bar h2 { font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); margin-right: 4px; }
+  .summary-chips { display: flex; gap: 10px; flex-wrap: wrap; }
+  .chip {
+    display: flex; align-items: center; gap: 6px;
+    padding: 4px 10px; border-radius: 20px; font-size: 0.78rem; font-weight: 600;
+  }
+  .chip-dot { width: 8px; height: 8px; border-radius: 50%; }
+  .chip-1 { background: var(--r1-light); color: var(--r1); }
+  .chip-1 .chip-dot { background: var(--r1); }
+  .chip-2 { background: var(--r2-light); color: var(--r2); }
+  .chip-2 .chip-dot { background: var(--r2); }
+  .chip-3 { background: var(--r3-light); color: #8a6000; }
+  .chip-3 .chip-dot { background: var(--r3); }
+  .chip-4 { background: var(--r4-light); color: #2d6a2d; }
+  .chip-4 .chip-dot { background: var(--r4); }
+  .chip-5 { background: var(--r5-light); color: var(--r5); }
+  .chip-5 .chip-dot { background: var(--r5); }
+  .chip-unrated { background: #f0f2f5; color: var(--muted); }
+  .chip-unrated .chip-dot { background: #cbd5e0; }
+  .progress-bar-wrap { flex: 1; min-width: 200px; }
+  .progress-bar { height: 6px; border-radius: 3px; background: var(--border); overflow: hidden; display: flex; }
+  .progress-seg { height: 100%; transition: width 0.4s; }
+  .seg-1 { background: var(--r1); }
+  .seg-2 { background: var(--r2); }
+  .seg-3 { background: var(--r3); }
+  .seg-4 { background: var(--r4); }
+  .seg-5 { background: var(--r5); }
+
+  /* LAYOUT */
+  .main { max-width: 900px; margin: 0 auto; padding: 32px 24px; }
+
+  /* PILLAR */
+  .pillar { margin-bottom: 36px; }
+  .pillar-header {
+    background: var(--pillar-bg); color: white;
+    padding: 14px 20px; border-radius: 8px 8px 0 0;
+    display: flex; align-items: center; gap: 12px; cursor: pointer;
+    user-select: none;
+  }
+  .pillar-header h2 { font-size: 0.9rem; font-weight: 700; letter-spacing: 0.04em; flex: 1; }
+  .pillar-header .pillar-meta { font-size: 0.75rem; color: #a0aec0; white-space: nowrap; }
+  .pillar-chevron { font-size: 0.75rem; transition: transform 0.2s; }
+  .pillar-body { border: 1px solid var(--border); border-top: none; border-radius: 0 0 8px 8px; overflow: hidden; }
+  .pillar.collapsed .pillar-body { display: none; }
+  .pillar.collapsed .pillar-chevron { transform: rotate(-90deg); }
+
+  /* ITEM */
+  .item {
+    background: var(--card); padding: 16px 20px;
+    border-bottom: 1px solid var(--border); transition: background 0.15s;
+  }
+  .item:last-child { border-bottom: none; }
+  .item.rated-1 { border-left: 4px solid var(--r1); }
+  .item.rated-2 { border-left: 4px solid var(--r2); }
+  .item.rated-3 { border-left: 4px solid var(--r3); }
+  .item.rated-4 { border-left: 4px solid var(--r4); }
+  .item.rated-5 { border-left: 4px solid var(--r5); }
+  .item.unrated { border-left: 4px solid var(--border); }
+  .item-text { font-size: 0.88rem; color: var(--text); margin-bottom: 12px; }
+  .item-controls { display: flex; gap: 6px; flex-wrap: wrap; align-items: flex-start; }
+  .rating-group { display: flex; gap: 4px; flex-wrap: wrap; }
+  .rating-btn {
+    padding: 5px 11px; border-radius: 5px; border: 1.5px solid transparent;
+    cursor: pointer; font-size: 0.75rem; font-weight: 600; transition: all 0.12s;
+    background: #f0f2f5; color: var(--muted); line-height: 1.3;
+    text-align: center; white-space: nowrap;
+  }
+  .rating-btn:hover { border-color: #cbd5e0; }
+  .rating-btn.active-1 { background: var(--r1-light); color: var(--r1); border-color: var(--r1); }
+  .rating-btn.active-2 { background: var(--r2-light); color: var(--r2); border-color: var(--r2); }
+  .rating-btn.active-3 { background: var(--r3-light); color: #8a6000; border-color: var(--r3); }
+  .rating-btn.active-4 { background: var(--r4-light); color: #2d6a2d; border-color: var(--r4); }
+  .rating-btn.active-5 { background: var(--r5-light); color: var(--r5); border-color: var(--r5); }
+  .notes-toggle {
+    margin-left: auto; padding: 5px 10px; border-radius: 5px; border: 1.5px solid var(--border);
+    background: transparent; cursor: pointer; font-size: 0.75rem; color: var(--muted); font-weight: 500;
+    transition: all 0.12s; white-space: nowrap;
+  }
+  .notes-toggle:hover { border-color: #4a90d9; color: #4a90d9; }
+  .notes-toggle.has-note { border-color: #4a90d9; color: #4a90d9; background: #f0f7ff; }
+  .notes-area { margin-top: 10px; display: none; }
+  .notes-area.open { display: block; }
+  .notes-area textarea {
+    width: 100%; padding: 8px 10px; font-size: 0.82rem; font-family: inherit;
+    border: 1.5px solid var(--border); border-radius: 5px; resize: vertical; min-height: 64px;
+    color: var(--text); background: #fafbfc; transition: border-color 0.12s; line-height: 1.5;
+  }
+  .notes-area textarea:focus { outline: none; border-color: #4a90d9; background: white; }
+
+  /* SCALE LEGEND */
+  .scale-legend {
+    background: white; border: 1px solid var(--border); border-radius: 8px;
+    padding: 16px 20px; margin-bottom: 28px;
+  }
+  .scale-legend h3 { font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); margin-bottom: 12px; }
+  .legend-items { display: flex; gap: 8px; flex-wrap: wrap; }
+  .legend-item { display: flex; align-items: center; gap: 6px; font-size: 0.78rem; }
+  .legend-swatch { width: 12px; height: 12px; border-radius: 3px; flex-shrink: 0; }
+  .ls-1 { background: var(--r1); }
+  .ls-2 { background: var(--r2); }
+  .ls-3 { background: var(--r3); }
+  .ls-4 { background: var(--r4); }
+  .ls-5 { background: var(--r5); }
+  .legend-item strong { font-weight: 700; }
+  .legend-sep { color: var(--border); font-weight: 300; }
+</style>
+</head>
+<body>
+
+<header class="site-header">
+  <div>
+    <h1>Director of Engineering — Self Assessment</h1>
+    <p>Navigator · Marcura &nbsp;·&nbsp; <span id="last-saved-label">Not yet saved</span></p>
+  </div>
+  <div class="header-actions">
+    <span class="save-indicator" id="save-indicator">Saved</span>
+    <button class="btn btn-save" onclick="saveToStorage()">Save</button>
+    <button class="btn btn-export" onclick="exportMarkdown()">Export .md</button>
+    <button class="btn btn-reset" onclick="confirmReset()">Reset</button>
+  </div>
+</header>
+
+<div class="summary-bar">
+  <h2>Summary</h2>
+  <div class="summary-chips" id="summary-chips"></div>
+  <div class="progress-bar-wrap">
+    <div class="progress-bar" id="progress-bar"></div>
+  </div>
+</div>
+
+<main class="main">
+
+  <div class="scale-legend">
+    <h3>Rating Scale</h3>
+    <div class="legend-items">
+      <script>
+        // Dynamically render the scale legend from RATINGS
+        document.addEventListener('DOMContentLoaded', function() {
+          const legendItems = document.querySelector('.legend-items');
+          legendItems.innerHTML = Object.entries(RATINGS).map(([k, v]) => `
+            <div class="legend-item">
+              <div class="legend-swatch ls-${k}"></div>
+              <strong>${k}</strong> <span class="legend-sep">·</span> ${v}
+            </div>
+          `).join('');
+        });
+      </script>
+    </div>
+  </div>
+
+  <div id="pillars"></div>
+
+</main>
+
+<script>
+const RATINGS = {
+  1: 'On radar for growth',
+  2: 'Developing',
+  3: 'Iterating',
+  4: 'Proficient',
+  5: 'Strong'
+};
+
+// D=Developing→2, P=Proficient→4, S=Strong→5
+const PILLARS = [
+  {
+    id: 'p1',
+    title: 'PILLAR 1: TECHNICAL VISION & ARCHITECTURE',
+    items: [
+      { id: 'p1_01', text: 'Defines, documents, and evolves a coherent technical vision that guides architectural principles, engineering standards, and decision-making frameworks.', prev: 2 },
+      { id: 'p1_02', text: 'Aligns engineering strategy and investment with company and product objectives.', prev: 4 },
+      { id: 'p1_03', text: 'Makes deliberate technology and architecture tradeoffs that balance short-term delivery with long-term sustainability.', prev: 4 },
+      { id: 'p1_04', text: 'Drives rational allocation of engineering effort across feature development, stability, and foundational platform improvements.', prev: 4 },
+      { id: 'p1_05', text: 'Establishes and maintains a disciplined approach to technical debt management, including clear prioritization and measurable reduction.', prev: 2 },
+      { id: 'p1_06', text: 'Defines and upholds quality standards, including review rigor, release discipline, and engineering best practices.', prev: 2 },
+      { id: 'p1_07', text: 'Shapes release and versioning practices that support dependable and repeatable execution.', prev: 4 },
+      { id: 'p1_08', text: 'Strengthens engineering practices that reduce defect escape and improve root cause clarity.', prev: 4 },
+      { id: 'p1_09', text: 'Maintains deep product, domain, and system knowledge to evaluate architectural risk and prioritize high-impact technical areas.', prev: 4 },
+      { id: 'p1_10', text: 'Defines observability, monitoring, and alerting standards that make operational risk visible and actionable.', prev: 4 },
+      { id: 'p1_11', text: 'Maintains platform dependencies, integrations, and provider requirements in a current and supported state to reduce operational, security, and regulatory risk.', prev: 4 },
+      { id: 'p1_12', text: 'Incorporates relevant engineering and industry developments into technical planning and direction.', prev: 4 },
+      { id: 'p1_13', text: 'Provides steady technical guidance across the engineering organization to ensure solutions remain aligned with long-term direction.', prev: 4 },
+    ]
+  },
+  {
+    id: 'p2',
+    title: 'PILLAR 2: DELIVERY',
+    items: [
+      { id: 'p2_01', text: 'Establishes and operates a structured delivery and roadmap model that ensures clear sequencing, dependency management, progress transparency, and defined risk escalation during execution.', prev: 2 },
+      { id: 'p2_02', text: 'Partners with Product to define and operate a structured planning process (e.g. OKRs), including reflecting on prior outcomes, aligning on upcoming objectives, maintaining visibility into progress and delivery confidence, and ensuring execution remains aligned with agreed priorities.', prev: 2 },
+      { id: 'p2_03', text: 'Drives cross-functional planning that surfaces feasibility constraints, risks, and tradeoffs early enough to shape scope, sequencing, and commitment decisions.', prev: 4 },
+      { id: 'p2_04', text: 'Aligns engineering output with defined product success indicators in partnership with Product and Data, and reinforces post-release outcome reviews to inform iteration.', prev: 2 },
+      { id: 'p2_05', text: 'Maintains clear visibility into engineering priorities, commitments, and delivery risk for leadership and stakeholders.', prev: 4 },
+      { id: 'p2_06', text: 'Oversees execution of engineering initiatives with disciplined sequencing, quality expectations, and accountability for commitments.', prev: 4 },
+      { id: 'p2_07', text: 'Allocates engineering capacity intentionally across strategic priorities, stability needs, and long-term platform investments.', prev: 4 },
+      { id: 'p2_08', text: 'Manages engineering-related budgets and tool investments in partnership with Finance and Procurement.', prev: 4 },
+      { id: 'p2_09', text: 'Participates in strategic planning to ensure engineering execution supports long-term company direction.', prev: 4 },
+      { id: 'p2_10', text: 'Represents engineering in internal and external discussions where feasibility, sequencing, risk, or operational readiness influence decision-making.', prev: 5 },
+      { id: 'p2_11', text: 'Maintains operating rhythms that enable consistent planning, inspection, and adjustment.', prev: 4 },
+      { id: 'p2_12', text: 'Removes cross-team blockers through active ownership and structured follow-through.', prev: 4 },
+      { id: 'p2_13', text: 'Identifies and removes structural and workflow constraints to improve engineering throughput in measurable ways.', prev: 4 },
+      { id: 'p2_14', text: 'Establishes and maintains a clear baseline view of engineering throughput and delivery performance to inform prioritization and investment decisions.', prev: 2 },
+      { id: 'p2_15', text: 'Evaluates organizational structure and role allocation to identify structural blockers to throughput and recommend adjustments.', prev: 2 },
+      { id: 'p2_16', text: 'Provides executive-ready reporting of engineering progress, tradeoffs, and constraints.', prev: 4 },
+      { id: 'p2_17', text: 'Fulfills governance and financial reporting obligations, including software capitalization and R&D documentation.', prev: 5 },
+      { id: 'p2_18', text: 'Shapes tooling strategy, vendor relationships, and IT partnership to actively support productivity and delivery quality.', prev: 4 },
+      { id: 'p2_19', text: 'Translates technical tradeoffs and risk posture into clear business language for cross-functional stakeholders and executive leadership.', prev: 2 },
+    ]
+  },
+  {
+    id: 'p3',
+    title: 'PILLAR 3: PLATFORM STABILITY, RISK & OPERATIONAL READINESS',
+    items: [
+      { id: 'p3_01', text: 'Maintains platform stability as a disciplined, ongoing practice.', prev: 4 },
+      { id: 'p3_02', text: 'Establishes and maintains a structured stability and risk management playbook that defines triage standards, prioritization of high-risk technical debt, monitoring expectations, alert management, and ownership of critical domains.', prev: 2 },
+      { id: 'p3_03', text: 'Conducts recurring stability and risk reviews and drives completion of corrective and preventative actions.', prev: 2 },
+      { id: 'p3_04', text: 'Maintains consistent incident reporting and root cause analysis standards that lead to measurable improvement.', prev: 2 },
+      { id: 'p3_05', text: 'Embeds security, audit, regulatory, and provider compliance requirements into engineering execution.', prev: 4 },
+      { id: 'p3_06', text: 'Integrates vulnerability management and risk mitigation practices into day-to-day development and release workflows.', prev: 2 },
+      { id: 'p3_07', text: 'Identifies material technical risks and defines remediation plans with sequencing, investment clarity, and executive alignment.', prev: 2 },
+      { id: 'p3_08', text: 'Maintains environment practices that support release quality, risk reduction, and effective triage.', prev: 4 },
+      { id: 'p3_09', text: 'Upholds quality expectations across code, documentation, and deliverables.', prev: 2 },
+      { id: 'p3_10', text: 'Coordinates with peer technical organizations to sustain operational readiness and platform reliability.', prev: 4 },
+    ]
+  },
+  {
+    id: 'p4',
+    title: 'PILLAR 4: PEOPLE, LEADERSHIP & CULTURE',
+    items: [
+      { id: 'p4_01', text: 'Leads and develops engineering leaders and contributors through coaching, performance management, and clear accountability standards.', prev: 5 },
+      { id: 'p4_02', text: 'Strengthens senior leadership capability and succession readiness within engineering.', prev: 5 },
+      { id: 'p4_03', text: 'Maintains clear role definitions, job descriptions, and performance expectations across IC and leadership tracks.', prev: 4 },
+      { id: 'p4_04', text: 'Defines and upholds a structured engineering career ladder applied consistently in development conversations.', prev: 2 },
+      { id: 'p4_05', text: 'Conducts fair and rigorous performance evaluations, recognizing strong performance and addressing underperformance directly.', prev: 4 },
+      { id: 'p4_06', text: 'Identifies organizational capability gaps and builds hiring and development plans to address them.', prev: 4 },
+      { id: 'p4_07', text: 'Promotes inclusive hiring and equitable development practices.', prev: 4 },
+      { id: 'p4_08', text: 'Fosters a culture of ownership, accountability, psychological safety, and professional rigor.', prev: 4 },
+      { id: 'p4_09', text: 'Monitors team health and workload sustainability to maintain consistent performance.', prev: 5 },
+      { id: 'p4_10', text: 'Reinforces structured knowledge sharing that deepens product understanding and strengthens engineering craft.', prev: 2 },
+      { id: 'p4_11', text: 'Applies adaptive leadership approaches, emphasizing coaching while adjusting to team maturity and situational needs.', prev: 4 },
+      { id: 'p4_12', text: 'Sustains a learning culture where reflection translates into measurable improvement.', prev: 4 },
+      { id: 'p4_13', text: 'Maintains documentation and knowledge practices that scale with the organization.', prev: 2 },
+      { id: 'p4_14', text: 'Strengthens collaboration across engineering groups and reduces structural silos.', prev: 4 },
+    ]
+  }
+];
+
+// State: { itemId: { rating: number|null, note: string } }
+let state = {};
+
+function initState() {
+  PILLARS.forEach(p => p.items.forEach(item => {
+    state[item.id] = { rating: item.prev, note: '' };
+  }));
+}
+
+function loadFromStorage() {
+  try {
+    const saved = localStorage.getItem('doe-self-assessment');
+    if (saved) {
+      const parsed = JSON.parse(saved);
+      if (parsed.state) {
+        // Merge: keep defaults for any missing items
+        Object.assign(state, parsed.state);
+      }
+      return parsed.savedAt || null;
+    }
+  } catch(e) {}
+  return null;
+}
+
+function saveToStorage() {
+  const savedAt = new Date().toISOString();
+  localStorage.setItem('doe-self-assessment', JSON.stringify({ state, savedAt }));
+  document.getElementById('last-saved-label').textContent = 'Saved ' + formatTime(savedAt);
+  const indicator = document.getElementById('save-indicator');
+  indicator.classList.add('show');
+  setTimeout(() => indicator.classList.remove('show'), 2000);
+}
+
+function formatTime(iso) {
+  const d = new Date(iso);
+  return d.toLocaleString(undefined, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+}
+
+function confirmReset() {
+  if (confirm('Reset all ratings and notes to the original imported values? This cannot be undone.')) {
+    initState();
+    renderAll();
+    saveToStorage();
+  }
+}
+
+// ---- RENDER ----
+function renderAll() {
+  renderPillars();
+  updateSummary();
+}
+
+function renderPillars() {
+  const container = document.getElementById('pillars');
+  container.innerHTML = '';
+  PILLARS.forEach(pillar => {
+    const el = document.createElement('div');
+    el.className = 'pillar';
+    el.id = pillar.id;
+
+    const ratedCount = pillar.items.filter(i => state[i.id]?.rating != null).length;
+
+    el.innerHTML = `
+      <div class="pillar-header" onclick="togglePillar('${pillar.id}')">
+        <h2>${pillar.title}</h2>
+        <span class="pillar-meta">${ratedCount}/${pillar.items.length} rated</span>
+        <span class="pillar-chevron">▾</span>
+      </div>
+      <div class="pillar-body" id="${pillar.id}-body"></div>
+    `;
+
+    container.appendChild(el);
+
+    const body = document.getElementById(pillar.id + '-body');
+    pillar.items.forEach(item => {
+      body.appendChild(renderItem(item));
+    });
+  });
+}
+
+function renderItem(item) {
+  const s = state[item.id] || { rating: null, note: '' };
+  const el = document.createElement('div');
+  el.className = 'item' + (s.rating ? ` rated-${s.rating}` : ' unrated');
+  el.id = 'item-' + item.id;
+
+  const btns = [1,2,3,4,5].map(r => {
+    const active = s.rating === r ? ` active-${r}` : '';
+    return `<button class="rating-btn${active}" onclick="setRating('${item.id}', ${r})" title="${RATINGS[r]}">${r} – ${RATINGS[r]}</button>`;
+  }).join('');
+
+  const hasNote = s.note && s.note.trim();
+  const notesOpen = hasNote ? ' open' : '';
+  const noteBtnClass = hasNote ? ' has-note' : '';
+
+  el.innerHTML = `
+    <div class="item-text">${escapeHtml(item.text)}</div>
+    <div class="item-controls">
+      <div class="rating-group">${btns}</div>
+      <button class="notes-toggle${noteBtnClass}" onclick="toggleNotes('${item.id}')" id="notebtn-${item.id}">
+        ${hasNote ? '✎ Note' : '+ Note'}
+      </button>
+    </div>
+    <div class="notes-area${notesOpen}" id="notes-${item.id}">
+      <textarea placeholder="Add context for your rating…" oninput="setNote('${item.id}', this.value)">${escapeHtml(s.note)}</textarea>
+    </div>
+  `;
+  return el;
+}
+
+function escapeHtml(str) {
+  return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+function togglePillar(id) {
+  document.getElementById(id).classList.toggle('collapsed');
+}
+
+function toggleNotes(itemId) {
+  const area = document.getElementById('notes-' + itemId);
+  area.classList.toggle('open');
+  if (area.classList.contains('open')) {
+    area.querySelector('textarea').focus();
+  }
+}
+
+function setRating(itemId, rating) {
+  if (!state[itemId]) state[itemId] = { rating: null, note: '' };
+  // Toggle off if clicking same rating
+  state[itemId].rating = state[itemId].rating === rating ? null : rating;
+  refreshItem(itemId);
+  updateSummary();
+  updatePillarMeta(itemId);
+  autoSave();
+}
+
+function setNote(itemId, value) {
+  if (!state[itemId]) state[itemId] = { rating: null, note: '' };
+  state[itemId].note = value;
+  const btn = document.getElementById('notebtn-' + itemId);
+  if (value.trim()) {
+    btn.classList.add('has-note');
+    btn.textContent = '✎ Note';
+  } else {
+    btn.classList.remove('has-note');
+    btn.textContent = '+ Note';
+  }
+  autoSave();
+}
+
+function refreshItem(itemId) {
+  const item = PILLARS.flatMap(p => p.items).find(i => i.id === itemId);
+  if (!item) return;
+  const el = document.getElementById('item-' + itemId);
+  const newEl = renderItem(item);
+  el.replaceWith(newEl);
+}
+
+function updatePillarMeta(itemId) {
+  const pillar = PILLARS.find(p => p.items.some(i => i.id === itemId));
+  if (!pillar) return;
+  const ratedCount = pillar.items.filter(i => state[i.id]?.rating != null).length;
+  const meta = document.querySelector(`#${pillar.id} .pillar-meta`);
+  if (meta) meta.textContent = `${ratedCount}/${pillar.items.length} rated`;
+}
+
+function updateSummary() {
+  const counts = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0, null: 0 };
+  PILLARS.forEach(p => p.items.forEach(item => {
+    const r = state[item.id]?.rating ?? null;
+    counts[r] = (counts[r] || 0) + 1;
+  }));
+  const total = Object.values(counts).reduce((a, b) => a + b, 0);
+
+  const chips = document.getElementById('summary-chips');
+  chips.innerHTML = '';
+
+  [1,2,3,4,5].forEach(r => {
+    if (counts[r] > 0) {
+      const chip = document.createElement('div');
+      chip.className = `chip chip-${r}`;
+      chip.innerHTML = `<div class="chip-dot"></div>${counts[r]} × ${RATINGS[r]}`;
+      chips.appendChild(chip);
+    }
+  });
+  if (counts[null] > 0) {
+    const chip = document.createElement('div');
+    chip.className = 'chip chip-unrated';
+    chip.innerHTML = `<div class="chip-dot"></div>${counts[null]} unrated`;
+    chips.appendChild(chip);
+  }
+
+  // Progress bar
+  const bar = document.getElementById('progress-bar');
+  bar.innerHTML = [1,2,3,4,5].map(r => {
+    const w = (counts[r] / total * 100).toFixed(1);
+    return `<div class="progress-seg seg-${r}" style="width:${w}%"></div>`;
+  }).join('');
+}
+
+let autoSaveTimer = null;
+function autoSave() {
+  clearTimeout(autoSaveTimer);
+  autoSaveTimer = setTimeout(saveToStorage, 1500);
+}
+
+// ---- EXPORT ----
+function exportMarkdown() {
+  const today = new Date().toISOString().split('T')[0];
+  const lines = [
+    `# Director of Engineering — Self Assessment`,
+    `Navigator · Marcura`,
+    ``,
+    `**Date:** ${today}`,
+    ``,
+    `## Rating Scale`,
+    `| # | Label |`,
+    `|---|-------|`,
+    ...Object.entries(RATINGS).map(([k, v]) => `| ${k} | ${v} |`),
+    ``
+  ];
+
+  const counts = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0, null: 0 };
+
+  PILLARS.forEach(pillar => {
+    lines.push(`---`);
+    lines.push(`## ${pillar.title}`);
+    lines.push('');
+    pillar.items.forEach((item, idx) => {
+      const s = state[item.id] || {};
+      const r = s.rating;
+      const label = r ? `${r} – ${RATINGS[r]}` : 'Unrated';
+      counts[r] = (counts[r] || 0) + 1;
+      lines.push(`### ${idx + 1}. ${item.text}`);
+      lines.push(`**Rating:** ${label}`);
+      if (s.note && s.note.trim()) {
+        lines.push(`**Notes:** ${s.note.trim()}`);
+      }
+      lines.push('');
+    });
+  });
+
+  lines.push('---');
+  lines.push('## Summary');
+  lines.push('');
+  [5,4,3,2,1].forEach(r => {
+    if (counts[r]) lines.push(`- **${RATINGS[r]}:** ${counts[r]}`);
+  });
+  if (counts[null]) lines.push(`- **Unrated:** ${counts[null]}`);
+
+  const blob = new Blob([lines.join('\n')], { type: 'text/markdown' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `doe-self-assessment-${today}.md`;
+  a.click();
+  URL.revokeObjectURL(a.href);
+}
+
+// ---- INIT ----
+initState();
+const savedAt = loadFromStorage();
+if (savedAt) {
+  document.getElementById('last-saved-label').textContent = 'Last saved ' + formatTime(savedAt);
+}
+renderAll();
+</script>
+</body>
+</html>
