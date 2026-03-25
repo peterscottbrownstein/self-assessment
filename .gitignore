@@ -140,4 +140,6 @@ vite.config.ts.timestamp-*
 
 # Local project folders
 app/dist/
-.vscode/
+.vscode/*
+!.vscode/launch.json
+!.vscode/tasks.json
