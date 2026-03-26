@@ -11,17 +11,19 @@ export default function App() {
   const fileInputRef = useRef(null);
   const {
     assessmentState,
+    assessmentSummary,
     savedAt,
     justSaved,
     setRating,
     setNote,
+    setPillarSummary,
     saveNow,
     reset,
     importState,
   } = useAssessment();
 
   function handleReset() {
-    if (confirm('Reset all ratings and notes to the original imported values? This cannot be undone.')) {
+    if (confirm('Reset all ratings, notes, and pillar summaries to the original imported values? This cannot be undone.')) {
       reset();
     }
   }
@@ -47,9 +49,9 @@ export default function App() {
         savedAt={savedAt}
         justSaved={justSaved}
         onSave={saveNow}
-        onExportData={() => exportAssessmentData(assessmentState, savedAt)}
+        onExportData={() => exportAssessmentData(assessmentState, assessmentSummary, savedAt)}
         onImportData={() => fileInputRef.current?.click()}
-        onExportMarkdown={() => exportMarkdown(assessmentState)}
+        onExportMarkdown={() => exportMarkdown(assessmentState, assessmentSummary)}
         onReset={handleReset}
       />
       <input
@@ -67,8 +69,10 @@ export default function App() {
             key={pillar.id}
             pillar={pillar}
             assessmentState={assessmentState}
+            summaryText={assessmentSummary.pillars[pillar.id] ?? ''}
             onRate={setRating}
             onNote={setNote}
+            onSummaryChange={value => setPillarSummary(pillar.id, value)}
           />
         ))}
       </main>

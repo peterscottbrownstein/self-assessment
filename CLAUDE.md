@@ -18,6 +18,7 @@ A self-assessment web app for a Director of Engineering role at Marcura/Navigato
 - The React app was verified with `npm run build` and `npm run lint`
 - `app/src/hooks/useAssessment.js` was lightly cleaned up so invalid or missing localStorage data falls back to defaults without failing lint
 - Assessment data can now be exported/imported as a versioned JSON backup file, separate from the Markdown export
+- Reflection summaries now live under each pillar instead of in one bottom-level summary section
 - Shared VS Code debugging is configured in `.vscode/launch.json` and `.vscode/tasks.json` so `F5` can start Vite and open the app in Chrome
 
 ## Running the React App
@@ -38,22 +39,23 @@ Update this file before committing when a change adds context another assistant 
 
 ```text
 data/pillars.js        - PILLARS array and RATINGS map (all assessment content lives here)
-hooks/useAssessment.js - ratings, notes, localStorage, auto-save, and import validation/normalization
+hooks/useAssessment.js - ratings, notes, per-pillar summaries, localStorage, auto-save, and import validation/normalization
 utils/export.js        - Markdown export plus versioned JSON backup export
 components/
   Header.jsx           - sticky header with save/export/import/reset actions
   SummaryBar.jsx       - live chip counts + color-coded progress bar
   ScaleLegend.jsx      - rating scale reference card
-  Pillar.jsx           - collapsible pillar section
+  Pillar.jsx           - collapsible pillar section plus per-pillar summary area
+  PillarSummary.jsx    - textarea UI for the written reflection under each pillar
   Item.jsx             - individual competency row with rating buttons and notes
 ```
 
 **Data model:** Each item in `PILLARS` has a stable `id` (format: `p1_01`), `text`, and `prev` (pre-populated rating from a prior 1-3 scale: Developing -> 2, Proficient -> 4, Strong -> 5).
 
-**State:** `useAssessment` holds a flat object keyed by item `id`, each value `{ rating: number|null, note: string }`. It initializes from `prev` values and merges in localStorage data on load.
+**State:** `useAssessment` holds a flat object keyed by item `id`, each value `{ rating: number|null, note: string }`. It also stores `summary.pillars[pillarId]` for the written reflection under each pillar. The app initializes from `prev` values and merges in localStorage data on load.
 
 **Rating scale:** 1 = On radar for growth, 2 = Developing, 3 = Iterating, 4 = Proficient, 5 = Strong.
 
 **Persistence:** Auto-saves to localStorage key `doe-self-assessment` about 1.5s after any change. `saveNow` triggers an immediate save.
 
-**Backup/import:** Structured assessment backups are exported as versioned JSON and can be imported back into the app. Import normalizes data against the current item ids and accepts partial payloads safely. Markdown export remains separate and is intended for human-readable sharing.
+**Backup/import:** Structured assessment backups are exported as versioned JSON and can be imported back into the app. Import normalizes data against the current item ids and accepts partial payloads safely. Markdown export remains separate and now includes any pillar summaries under the corresponding pillar sections.

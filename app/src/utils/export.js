@@ -11,7 +11,7 @@ function downloadFile(contents, mimeType, filename) {
   URL.revokeObjectURL(a.href);
 }
 
-export function exportAssessmentData(assessmentState, savedAt) {
+export function exportAssessmentData(assessmentState, assessmentSummary, savedAt) {
   const today = new Date().toISOString().split('T')[0];
   const payload = {
     app: 'doe-self-assessment',
@@ -19,6 +19,7 @@ export function exportAssessmentData(assessmentState, savedAt) {
     exportedAt: new Date().toISOString(),
     savedAt,
     state: assessmentState,
+    summary: assessmentSummary,
   };
 
   downloadFile(
@@ -28,42 +29,50 @@ export function exportAssessmentData(assessmentState, savedAt) {
   );
 }
 
-export function exportMarkdown(assessmentState) {
+export function exportMarkdown(assessmentState, assessmentSummary) {
   const today = new Date().toISOString().split('T')[0];
   const counts = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0, null: 0 };
 
   const lines = [
-    `# Director of Engineering — Self Assessment`,
-    `Navigator · Marcura`,
-    ``,
+    '# Director of Engineering - Self Assessment',
+    'Navigator | Marcura',
+    '',
     `**Date:** ${today}`,
-    ``,
-    `## Rating Scale`,
-    `| # | Label |`,
-    `|---|-------|`,
+    '',
+    '## Rating Scale',
+    '| # | Label |',
+    '|---|-------|',
     ...Object.entries(RATINGS).map(([k, v]) => `| ${k} | ${v} |`),
-    ``,
+    '',
   ];
 
   PILLARS.forEach(pillar => {
-    lines.push(`---`);
+    lines.push('---');
     lines.push(`## ${pillar.title}`);
-    lines.push(``);
+    lines.push('');
+
     pillar.items.forEach((item, idx) => {
       const s = assessmentState[item.id] || {};
       const r = s.rating ?? null;
       counts[r] = (counts[r] || 0) + 1;
-      const label = r ? `${r} – ${RATINGS[r]}` : 'Unrated';
+      const label = r ? `${r} - ${RATINGS[r]}` : 'Unrated';
       lines.push(`### ${idx + 1}. ${item.text}`);
       lines.push(`**Rating:** ${label}`);
       if (s.note?.trim()) lines.push(`**Notes:** ${s.note.trim()}`);
-      lines.push(``);
+      lines.push('');
     });
+
+    const pillarSummary = assessmentSummary.pillars?.[pillar.id]?.trim();
+    if (pillarSummary) {
+      lines.push('### Pillar Summary');
+      lines.push(pillarSummary);
+      lines.push('');
+    }
   });
 
-  lines.push(`---`);
-  lines.push(`## Summary`);
-  lines.push(``);
+  lines.push('---');
+  lines.push('## Summary');
+  lines.push('');
   [5, 4, 3, 2, 1].forEach(r => {
     if (counts[r]) lines.push(`- **${RATINGS[r]}:** ${counts[r]}`);
   });

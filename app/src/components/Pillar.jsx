@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import { Item } from './Item';
+import { PillarSummary } from './PillarSummary';
 
-export function Pillar({ pillar, assessmentState, onRate, onNote }) {
+export function Pillar({ pillar, assessmentState, summaryText, onRate, onNote, onSummaryChange }) {
   const [collapsed, setCollapsed] = useState(false);
   const ratedCount = pillar.items.filter(i => assessmentState[i.id]?.rating != null).length;
 
@@ -23,6 +24,11 @@ export function Pillar({ pillar, assessmentState, onRate, onNote }) {
               onNote={onNote}
             />
           ))}
+          <PillarSummary
+            pillarTitle={pillar.title}
+            value={summaryText}
+            onChange={onSummaryChange}
+          />
         </div>
       )}
     </div>

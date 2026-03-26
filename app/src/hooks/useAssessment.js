@@ -14,6 +14,19 @@ function buildDefaultState() {
   return s;
 }
 
+function buildDefaultSummary() {
+  const pillars = {};
+  PILLARS.forEach(pillar => {
+    pillars[pillar.id] = '';
+  });
+
+  return {
+    pillars,
+    overall: '',
+    nextSteps: '',
+  };
+}
+
 function normalizeAssessmentState(candidateState) {
   const defaultState = buildDefaultState();
 
@@ -34,6 +47,28 @@ function normalizeAssessmentState(candidateState) {
   return defaultState;
 }
 
+function normalizeAssessmentSummary(candidateSummary) {
+  const defaultSummary = buildDefaultSummary();
+
+  if (!candidateSummary || typeof candidateSummary !== 'object') {
+    return defaultSummary;
+  }
+
+  const normalizedPillars = { ...defaultSummary.pillars };
+  if (candidateSummary.pillars && typeof candidateSummary.pillars === 'object') {
+    Object.keys(normalizedPillars).forEach(pillarId => {
+      normalizedPillars[pillarId] =
+        typeof candidateSummary.pillars[pillarId] === 'string' ? candidateSummary.pillars[pillarId] : '';
+    });
+  }
+
+  return {
+    pillars: normalizedPillars,
+    overall: typeof candidateSummary.overall === 'string' ? candidateSummary.overall : '',
+    nextSteps: typeof candidateSummary.nextSteps === 'string' ? candidateSummary.nextSteps : '',
+  };
+}
+
 function loadState() {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
@@ -41,62 +76,92 @@ function loadState() {
       const parsed = JSON.parse(raw);
       return {
         state: normalizeAssessmentState(parsed.state),
+        summary: normalizeAssessmentSummary(parsed.summary),
         savedAt: typeof parsed.savedAt === 'string' ? parsed.savedAt : null,
       };
     }
   } catch {
     // Fall back to the imported defaults when saved data is missing or invalid.
   }
-  return { state: buildDefaultState(), savedAt: null };
+
+  return {
+    state: buildDefaultState(),
+    summary: buildDefaultSummary(),
+    savedAt: null,
+  };
 }
 
 export function useAssessment() {
-  const [assessmentState, setAssessmentState] = useState(() => loadState().state);
-  const [savedAt, setSavedAt] = useState(() => loadState().savedAt);
+  const [initialState] = useState(loadState);
+  const [assessmentState, setAssessmentState] = useState(initialState.state);
+  const [assessmentSummary, setAssessmentSummary] = useState(initialState.summary);
+  const [savedAt, setSavedAt] = useState(initialState.savedAt);
   const [justSaved, setJustSaved] = useState(false);
   const autoSaveTimer = useRef(null);
 
-  const persistToStorage = useCallback((currentState) => {
+  const persistToStorage = useCallback((currentState, currentSummary) => {
     const savedAtNow = new Date().toISOString();
-    localStorage.setItem(STORAGE_KEY, JSON.stringify({ state: currentState, savedAt: savedAtNow }));
+    localStorage.setItem(
+      STORAGE_KEY,
+      JSON.stringify({ state: currentState, summary: currentSummary, savedAt: savedAtNow })
+    );
     setSavedAt(savedAtNow);
     setJustSaved(true);
     setTimeout(() => setJustSaved(false), 2000);
   }, []);
 
-  const scheduleAutoSave = useCallback((currentState) => {
+  const scheduleAutoSave = useCallback((currentState, currentSummary) => {
     clearTimeout(autoSaveTimer.current);
-    autoSaveTimer.current = setTimeout(() => persistToStorage(currentState), 1500);
+    autoSaveTimer.current = setTimeout(() => persistToStorage(currentState, currentSummary), 1500);
   }, [persistToStorage]);
 
   const setRating = useCallback((itemId, rating) => {
     setAssessmentState(prev => {
       const current = prev[itemId]?.rating;
       const next = { ...prev, [itemId]: { ...prev[itemId], rating: current === rating ? null : rating } };
-      scheduleAutoSave(next);
+      scheduleAutoSave(next, assessmentSummary);
       return next;
     });
-  }, [scheduleAutoSave]);
+  }, [assessmentSummary, scheduleAutoSave]);
 
   const setNote = useCallback((itemId, note) => {
     setAssessmentState(prev => {
       const next = { ...prev, [itemId]: { ...prev[itemId], note } };
-      scheduleAutoSave(next);
+      scheduleAutoSave(next, assessmentSummary);
       return next;
     });
-  }, [scheduleAutoSave]);
+  }, [assessmentSummary, scheduleAutoSave]);
+
+  const setPillarSummary = useCallback((pillarId, value) => {
+    setAssessmentSummary(prev => {
+      const next = {
+        ...prev,
+        pillars: {
+          ...prev.pillars,
+          [pillarId]: value,
+        },
+      };
+      scheduleAutoSave(assessmentState, next);
+      return next;
+    });
+  }, [assessmentState, scheduleAutoSave]);
 
   const saveNow = useCallback(() => {
-    setAssessmentState(current => {
-      persistToStorage(current);
-      return current;
+    setAssessmentState(currentState => {
+      setAssessmentSummary(currentSummary => {
+        persistToStorage(currentState, currentSummary);
+        return currentSummary;
+      });
+      return currentState;
     });
   }, [persistToStorage]);
 
   const reset = useCallback(() => {
     const defaultState = buildDefaultState();
+    const defaultSummary = buildDefaultSummary();
     setAssessmentState(defaultState);
-    persistToStorage(defaultState);
+    setAssessmentSummary(defaultSummary);
+    persistToStorage(defaultState, defaultSummary);
   }, [persistToStorage]);
 
   const importState = useCallback((payload) => {
@@ -109,13 +174,25 @@ export function useAssessment() {
     }
 
     const nextState = normalizeAssessmentState(payload.state);
+    const nextSummary = normalizeAssessmentSummary(payload.summary);
     clearTimeout(autoSaveTimer.current);
     setAssessmentState(nextState);
-    persistToStorage(nextState);
+    setAssessmentSummary(nextSummary);
+    persistToStorage(nextState, nextSummary);
   }, [persistToStorage]);
 
-  // Cleanup timer on unmount
   useEffect(() => () => clearTimeout(autoSaveTimer.current), []);
 
-  return { assessmentState, savedAt, justSaved, setRating, setNote, saveNow, reset, importState };
+  return {
+    assessmentState,
+    assessmentSummary,
+    savedAt,
+    justSaved,
+    setRating,
+    setNote,
+    setPillarSummary,
+    saveNow,
+    reset,
+    importState,
+  };
 }
