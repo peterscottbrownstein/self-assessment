@@ -6,7 +6,7 @@ export function ToastStack({ toasts, onDismiss }) {
       {toasts.map(toast => (
         <div key={toast.id} className={`toast toast-${toast.type}`}>
           <div className="toast-copy">
-            <strong>{toast.type === 'error' ? 'Upload failed' : 'Upload complete'}</strong>
+            <strong>{toast.title || (toast.type === 'error' ? 'Something went wrong' : 'Success')}</strong>
             <span>{toast.message}</span>
           </div>
           <button

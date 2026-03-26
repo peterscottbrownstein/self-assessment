@@ -79,9 +79,9 @@ export default function App() {
     setToasts(currentToasts => currentToasts.filter(toast => toast.id !== toastId));
   }
 
-  function showToast(message, type = 'success') {
+  function showToast(message, type = 'success', title) {
     const toastId = `${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
-    setToasts(currentToasts => [...currentToasts, { id: toastId, message, type }]);
+    setToasts(currentToasts => [...currentToasts, { id: toastId, message, type, title }]);
 
     const timerId = setTimeout(() => {
       setToasts(currentToasts => currentToasts.filter(toast => toast.id !== toastId));
@@ -105,7 +105,7 @@ export default function App() {
     try {
       renameAssessment(assessmentId, nextTitle);
     } catch (error) {
-      showToast(error instanceof Error ? error.message : 'Unable to rename assessment.', 'error');
+      showToast(error instanceof Error ? error.message : 'Unable to rename assessment.', 'error', 'Rename failed');
     }
   }
 
@@ -120,9 +120,9 @@ export default function App() {
       if (assessmentId === currentAssessment.id) {
         setView('library');
       }
-      showToast(`Archived "${assessment.title}".`);
+      showToast(`"${assessment.title}" is now in the archived list.`, 'success', 'Assessment archived');
     } catch (error) {
-      showToast(error instanceof Error ? error.message : 'Unable to archive assessment.', 'error');
+      showToast(error instanceof Error ? error.message : 'Unable to archive assessment.', 'error', 'Archive failed');
     }
   }
 
@@ -131,7 +131,7 @@ export default function App() {
     if (!assessment) return;
 
     restoreAssessment(assessmentId);
-    showToast(`Restored "${assessment.title}".`);
+    showToast(`"${assessment.title}" is active again.`, 'success', 'Assessment restored');
   }
 
   function handleReset() {
@@ -151,9 +151,9 @@ export default function App() {
       await waitForNextPaint();
       const payload = JSON.parse(await file.text());
       importState(payload);
-      showToast('Assessment data imported successfully.');
+      showToast('Assessment data imported successfully.', 'success', 'Data imported');
     } catch (error) {
-      showToast(error instanceof Error ? error.message : 'Unable to import that file.', 'error');
+      showToast(error instanceof Error ? error.message : 'Unable to import that file.', 'error', 'Import failed');
     } finally {
       setBusyMessage('');
     }
@@ -181,9 +181,9 @@ export default function App() {
       });
       setUploadTitle('');
       setView('assessment');
-      showToast(`Created "${importedAssessment.title}".`);
+      showToast(`"${importedAssessment.title}" is ready to review.`, 'success', 'Assessment created');
     } catch (error) {
-      showToast(error instanceof Error ? error.message : 'Unable to create an assessment from that CSV.', 'error');
+      showToast(error instanceof Error ? error.message : 'Unable to create an assessment from that CSV.', 'error', 'CSV upload failed');
     } finally {
       setBusyMessage('');
     }
