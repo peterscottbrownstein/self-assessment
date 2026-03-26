@@ -1,6 +1,8 @@
-import { PILLARS, RATINGS, RATING_DEFINITIONS } from '../data/pillars';
+import { RATINGS, RATING_DEFINITIONS } from '../data/pillars';
+import { APP_ID, flattenItems } from './assessmentModel';
+import { buildTemplateSlug } from './csv';
 
-const BACKUP_VERSION = 1;
+const BACKUP_VERSION = 2;
 
 function downloadFile(contents, mimeType, filename) {
   const blob = new Blob([contents], { type: mimeType });
@@ -9,6 +11,15 @@ function downloadFile(contents, mimeType, filename) {
   a.download = filename;
   a.click();
   URL.revokeObjectURL(a.href);
+}
+
+function escapeCsvValue(value) {
+  const stringValue = `${value ?? ''}`;
+  if (!/[",\n\r]/.test(stringValue)) {
+    return stringValue;
+  }
+
+  return `"${stringValue.replace(/"/g, '""')}"`;
 }
 
 function buildCounts(items, assessmentState) {
@@ -30,79 +41,91 @@ function buildAverage(counts) {
   return (weightedScore / ratedCount).toFixed(2);
 }
 
-function appendSummary(lines, counts, includeAverage = false) {
+function appendRatingSummaryTable(lines, counts, includeAverage = false) {
+  lines.push('| Metric | Value |');
+  lines.push('|--------|-------|');
+
   if (includeAverage) {
     const average = buildAverage(counts);
-    if (average) lines.push(`- **Average:** ${average}/5`);
+    const averageLabel = average ? '**Average**' : 'Average';
+    const averageValue = average ? `**${average}/5**` : 'N/A';
+    lines.push(`| ${averageLabel} | ${averageValue} |`);
   }
 
-  [5, 4, 3, 2, 1].forEach(rating => {
-    if (counts[rating]) lines.push(`- **${RATINGS[rating]}:** ${counts[rating]}`);
+  [1, 2, 3, 4, 5].forEach(rating => {
+    const value = counts[rating];
+    const label = value !== 0 ? `**${RATINGS[rating]}**` : RATINGS[rating];
+    const displayValue = value !== 0 ? `**${value}**` : value;
+    lines.push(`| ${label} | ${displayValue} |`);
   });
 
-  if (counts[null]) lines.push(`- **Unrated:** ${counts[null]}`);
+  const unratedValue = counts[null];
+  const unratedLabel = unratedValue !== 0 ? '**Unrated**' : 'Unrated';
+  const unratedDisplayValue = unratedValue !== 0 ? `**${unratedValue}**` : unratedValue;
+  lines.push(`| ${unratedLabel} | ${unratedDisplayValue} |`);
 }
 
-export function exportAssessmentData(assessmentState, assessmentSummary, savedAt) {
+export function exportAssessmentData(assessment) {
   const today = new Date().toISOString().split('T')[0];
+  const slug = buildTemplateSlug(assessment.title);
   const payload = {
-    app: 'doe-self-assessment',
+    app: APP_ID,
     version: BACKUP_VERSION,
     exportedAt: new Date().toISOString(),
-    savedAt,
-    state: assessmentState,
-    summary: assessmentSummary,
+    assessment: {
+      title: assessment.title,
+      template: assessment.template,
+      state: assessment.state,
+      summary: assessment.summary,
+      savedAt: assessment.savedAt,
+    },
   };
 
   downloadFile(
     JSON.stringify(payload, null, 2),
     'application/json',
-    `doe-self-assessment-backup-${today}.json`
+    `${slug}-backup-${today}.json`
   );
 }
 
-export function exportMarkdown(assessmentState, assessmentSummary) {
+export function exportMarkdown(assessment) {
   const today = new Date().toISOString().split('T')[0];
-  const allItems = PILLARS.flatMap(pillar => pillar.items);
-  const overallCounts = buildCounts(allItems, assessmentState);
+  const allItems = flattenItems(assessment.template);
+  const overallCounts = buildCounts(allItems, assessment.state);
+  const slug = buildTemplateSlug(assessment.title);
   let globalIndex = 1;
 
   const lines = [
-    '# Director of Engineering - Self Assessment',
-    'Navigator | Marcura',
+    `# ${assessment.title}`,
+    assessment.template.subtitle || '',
     '',
     `**Date:** ${today}`,
     '',
-    '## Summary',
+    '## Rating Scale',
+    '| Rating | Label | Definition |',
+    '|--------|-------|------------|',
+    ...Object.entries(RATINGS).map(([rating, label]) => `| ${rating} | ${label} | ${RATING_DEFINITIONS[rating]} |`),
+    '',
+    '## Rating Summary',
     '',
   ];
 
-  appendSummary(lines, overallCounts, true);
-
-  lines.push('');
-  lines.push('## Rating Scale');
-  lines.push('| # | Label | Definition |');
-  lines.push('|---|-------|------------|');
-  Object.entries(RATINGS).forEach(([rating, label]) => {
-    lines.push(`| ${rating} | ${label} | ${RATING_DEFINITIONS[rating]} |`);
-  });
+  appendRatingSummaryTable(lines, overallCounts, true);
   lines.push('');
 
-  PILLARS.forEach(pillar => {
-    const pillarCounts = buildCounts(pillar.items, assessmentState);
-    const pillarAverage = buildAverage(pillarCounts);
+  assessment.template.pillars.forEach(pillar => {
+    const pillarCounts = buildCounts(pillar.items, assessment.state);
 
     lines.push('---');
     lines.push(`## ${pillar.title}`);
     lines.push('');
     lines.push('### Pillar Rating Summary');
     lines.push('');
-    if (pillarAverage) lines.push(`- **Average:** ${pillarAverage}/5`);
-    appendSummary(lines, pillarCounts, false);
+    appendRatingSummaryTable(lines, pillarCounts, true);
     lines.push('');
 
     pillar.items.forEach(item => {
-      const current = assessmentState[item.id] || {};
+      const current = assessment.state[item.id] || {};
       const rating = current.rating ?? null;
       const label = rating ? `${rating} - ${RATINGS[rating]}` : 'Unrated';
 
@@ -113,7 +136,7 @@ export function exportMarkdown(assessmentState, assessmentSummary) {
       globalIndex += 1;
     });
 
-    const pillarReflection = assessmentSummary.pillars?.[pillar.id]?.trim();
+    const pillarReflection = assessment.summary.pillars?.[pillar.id]?.trim();
     if (pillarReflection) {
       lines.push('### Pillar Reflection');
       lines.push(pillarReflection);
@@ -121,5 +144,29 @@ export function exportMarkdown(assessmentState, assessmentSummary) {
     }
   });
 
-  downloadFile(lines.join('\n'), 'text/markdown', `doe-self-assessment-${today}.md`);
+  downloadFile(lines.join('\n'), 'text/markdown', `${slug}-${today}.md`);
+}
+
+export function exportCsv(assessment) {
+  const today = new Date().toISOString().split('T')[0];
+  const slug = buildTemplateSlug(assessment.title);
+  const rows = ['title,category,responsibility,rating,note,pillar_reflection'];
+
+  assessment.template.pillars.forEach(pillar => {
+    pillar.items.forEach(item => {
+      const itemState = assessment.state[item.id] || {};
+      const pillarReflection = assessment.summary.pillars?.[pillar.id] ?? '';
+
+      rows.push([
+        escapeCsvValue(assessment.title),
+        escapeCsvValue(pillar.title),
+        escapeCsvValue(item.text),
+        escapeCsvValue(itemState.rating ?? ''),
+        escapeCsvValue(itemState.note ?? ''),
+        escapeCsvValue(pillarReflection),
+      ].join(','));
+    });
+  });
+
+  downloadFile(rows.join('\n'), 'text/csv', `${slug}-${today}.csv`);
 }

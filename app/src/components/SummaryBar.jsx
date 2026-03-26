@@ -1,4 +1,4 @@
-import { PILLARS, RATINGS } from '../data/pillars';
+import { RATINGS } from '../data/pillars';
 
 function buildCounts(items, assessmentState) {
   const counts = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0, null: 0 };
@@ -16,14 +16,13 @@ export function SummaryBar({
   items,
   title = 'Summary',
   className = '',
+  showAverage = false,
 }) {
-  const summaryItems = items ?? PILLARS.flatMap(pillar => pillar.items);
-  const counts = buildCounts(summaryItems, assessmentState);
-  const total = summaryItems.length;
+  const counts = buildCounts(items, assessmentState);
+  const total = items.length;
   const ratedCount = [1, 2, 3, 4, 5].reduce((sum, rating) => sum + counts[rating], 0);
   const weightedScore = [1, 2, 3, 4, 5].reduce((sum, rating) => sum + (rating * counts[rating]), 0);
   const averageScore = ratedCount > 0 ? (weightedScore / ratedCount).toFixed(2) : null;
-  const showAverage = !items;
 
   return (
     <div className={`summary-bar ${className}`.trim()}>

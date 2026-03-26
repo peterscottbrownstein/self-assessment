@@ -1,193 +1,329 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
-import { PILLARS } from '../data/pillars';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import {
+  APP_ID,
+  createAssessmentRecord,
+  createBuiltinAssessmentRecord,
+  generateAssessmentId,
+  normalizeAssessmentState,
+  normalizeAssessmentSummary,
+  normalizeTemplate,
+} from '../utils/assessmentModel';
 
-const STORAGE_KEY = 'doe-self-assessment';
-const VALID_RATINGS = new Set([1, 2, 3, 4, 5]);
+const STORAGE_KEY = 'doe-self-assessment-library';
+const LEGACY_STORAGE_KEY = 'doe-self-assessment';
 
-function buildDefaultState() {
-  const s = {};
-  PILLARS.forEach(p =>
-    p.items.forEach(item => {
-      s[item.id] = { rating: item.prev, note: '' };
+function buildDefaultLibrary() {
+  const builtinAssessment = createBuiltinAssessmentRecord();
+
+  return {
+    assessments: [builtinAssessment],
+    currentAssessmentId: builtinAssessment.id,
+  };
+}
+
+function normalizeLibrary(candidateLibrary) {
+  if (!candidateLibrary || typeof candidateLibrary !== 'object') {
+    return buildDefaultLibrary();
+  }
+
+  const rawAssessments = Array.isArray(candidateLibrary.assessments) ? candidateLibrary.assessments : [];
+  const assessments = rawAssessments
+    .map(record => {
+      if (!record || typeof record !== 'object') return null;
+
+      return createAssessmentRecord({
+        id: typeof record.id === 'string' && record.id.trim() ? record.id.trim() : generateAssessmentId(),
+        title: record.title,
+        template: record.template,
+        source: typeof record.source === 'string' ? record.source : 'custom',
+        createdAt: typeof record.createdAt === 'string' ? record.createdAt : new Date().toISOString(),
+        updatedAt: typeof record.updatedAt === 'string' ? record.updatedAt : new Date().toISOString(),
+        savedAt: typeof record.savedAt === 'string' ? record.savedAt : null,
+        state: record.state,
+        summary: record.summary,
+      });
     })
-  );
-  return s;
-}
+    .filter(Boolean);
 
-function buildDefaultSummary() {
-  const pillars = {};
-  PILLARS.forEach(pillar => {
-    pillars[pillar.id] = '';
-  });
+  if (assessments.length === 0) {
+    return buildDefaultLibrary();
+  }
+
+  const currentAssessmentId = assessments.some(
+    assessment => assessment.id === candidateLibrary.currentAssessmentId
+  )
+    ? candidateLibrary.currentAssessmentId
+    : assessments[0].id;
 
   return {
-    pillars,
-    overall: '',
-    nextSteps: '',
+    assessments,
+    currentAssessmentId,
   };
 }
 
-function normalizeAssessmentState(candidateState) {
-  const defaultState = buildDefaultState();
+function migrateLegacyState() {
+  try {
+    const raw = localStorage.getItem(LEGACY_STORAGE_KEY);
+    if (!raw) return null;
 
-  if (!candidateState || typeof candidateState !== 'object') {
-    return defaultState;
-  }
+    const parsed = JSON.parse(raw);
+    const builtinAssessment = createBuiltinAssessmentRecord();
 
-  Object.keys(defaultState).forEach(itemId => {
-    const current = candidateState[itemId];
-    if (!current || typeof current !== 'object') return;
-
-    defaultState[itemId] = {
-      rating: VALID_RATINGS.has(current.rating) ? current.rating : null,
-      note: typeof current.note === 'string' ? current.note : '',
+    return {
+      assessments: [
+        {
+          ...builtinAssessment,
+          state: normalizeAssessmentState(builtinAssessment.template, parsed.state),
+          summary: normalizeAssessmentSummary(builtinAssessment.template, parsed.summary),
+          savedAt: typeof parsed.savedAt === 'string' ? parsed.savedAt : null,
+        },
+      ],
+      currentAssessmentId: builtinAssessment.id,
     };
-  });
-
-  return defaultState;
+  } catch {
+    return null;
+  }
 }
 
-function normalizeAssessmentSummary(candidateSummary) {
-  const defaultSummary = buildDefaultSummary();
-
-  if (!candidateSummary || typeof candidateSummary !== 'object') {
-    return defaultSummary;
-  }
-
-  const normalizedPillars = { ...defaultSummary.pillars };
-  if (candidateSummary.pillars && typeof candidateSummary.pillars === 'object') {
-    Object.keys(normalizedPillars).forEach(pillarId => {
-      normalizedPillars[pillarId] =
-        typeof candidateSummary.pillars[pillarId] === 'string' ? candidateSummary.pillars[pillarId] : '';
-    });
-  }
-
-  return {
-    pillars: normalizedPillars,
-    overall: typeof candidateSummary.overall === 'string' ? candidateSummary.overall : '',
-    nextSteps: typeof candidateSummary.nextSteps === 'string' ? candidateSummary.nextSteps : '',
-  };
-}
-
-function loadState() {
+function loadLibrary() {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (raw) {
-      const parsed = JSON.parse(raw);
-      return {
-        state: normalizeAssessmentState(parsed.state),
-        summary: normalizeAssessmentSummary(parsed.summary),
-        savedAt: typeof parsed.savedAt === 'string' ? parsed.savedAt : null,
-      };
+      return normalizeLibrary(JSON.parse(raw));
     }
   } catch {
-    // Fall back to the imported defaults when saved data is missing or invalid.
+    // Fall back to the built-in defaults if stored data is invalid.
   }
 
-  return {
-    state: buildDefaultState(),
-    summary: buildDefaultSummary(),
-    savedAt: null,
-  };
+  const migrated = migrateLegacyState();
+  return migrated ? normalizeLibrary(migrated) : buildDefaultLibrary();
 }
 
 export function useAssessment() {
-  const [initialState] = useState(loadState);
-  const [assessmentState, setAssessmentState] = useState(initialState.state);
-  const [assessmentSummary, setAssessmentSummary] = useState(initialState.summary);
-  const [savedAt, setSavedAt] = useState(initialState.savedAt);
+  const [library, setLibrary] = useState(loadLibrary);
   const [justSaved, setJustSaved] = useState(false);
   const autoSaveTimer = useRef(null);
+  const savedIndicatorTimer = useRef(null);
 
-  const persistToStorage = useCallback((currentState, currentSummary) => {
-    const savedAtNow = new Date().toISOString();
-    localStorage.setItem(
-      STORAGE_KEY,
-      JSON.stringify({ state: currentState, summary: currentSummary, savedAt: savedAtNow })
-    );
-    setSavedAt(savedAtNow);
+  const showSavedIndicator = useCallback(() => {
+    clearTimeout(savedIndicatorTimer.current);
     setJustSaved(true);
-    setTimeout(() => setJustSaved(false), 2000);
+    savedIndicatorTimer.current = setTimeout(() => setJustSaved(false), 2000);
   }, []);
 
-  const scheduleAutoSave = useCallback((currentState, currentSummary) => {
+  const persistToStorage = useCallback((libraryToPersist) => {
+    const savedAtNow = new Date().toISOString();
+    const persistedLibrary = {
+      ...libraryToPersist,
+      assessments: libraryToPersist.assessments.map(assessment =>
+        assessment.id === libraryToPersist.currentAssessmentId
+          ? { ...assessment, savedAt: savedAtNow, updatedAt: savedAtNow }
+          : assessment
+      ),
+    };
+
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(persistedLibrary));
+    setLibrary(persistedLibrary);
+    showSavedIndicator();
+  }, [showSavedIndicator]);
+
+  const scheduleAutoSave = useCallback((libraryToPersist) => {
     clearTimeout(autoSaveTimer.current);
-    autoSaveTimer.current = setTimeout(() => persistToStorage(currentState, currentSummary), 1500);
+    autoSaveTimer.current = setTimeout(() => persistToStorage(libraryToPersist), 1500);
   }, [persistToStorage]);
+
+  const updateCurrentAssessment = useCallback((updater, saveMode = 'auto') => {
+    setLibrary(currentLibrary => {
+      const nextLibrary = {
+        ...currentLibrary,
+        assessments: currentLibrary.assessments.map(assessment => (
+          assessment.id === currentLibrary.currentAssessmentId ? updater(assessment) : assessment
+        )),
+      };
+
+      if (saveMode === 'immediate') {
+        clearTimeout(autoSaveTimer.current);
+        persistToStorage(nextLibrary);
+        return nextLibrary;
+      }
+
+      if (saveMode === 'auto') {
+        scheduleAutoSave(nextLibrary);
+      }
+
+      return nextLibrary;
+    });
+  }, [persistToStorage, scheduleAutoSave]);
+
+  const currentAssessment = library.assessments.find(
+    assessment => assessment.id === library.currentAssessmentId
+  ) ?? library.assessments[0];
+
+  const openAssessment = useCallback((assessmentId) => {
+    setLibrary(currentLibrary => {
+      if (!currentLibrary.assessments.some(assessment => assessment.id === assessmentId)) {
+        return currentLibrary;
+      }
+
+      return {
+        ...currentLibrary,
+        currentAssessmentId: assessmentId,
+      };
+    });
+  }, []);
+
+  const createAssessment = useCallback(({ title, template, source = 'csv', state, summary }) => {
+    const assessmentId = generateAssessmentId();
+    const normalizedTemplate = normalizeTemplate(template);
+    const nextAssessment = createAssessmentRecord({
+      id: assessmentId,
+      title,
+      template: normalizedTemplate,
+      source,
+      state,
+      summary,
+    });
+
+    setLibrary(currentLibrary => {
+      const nextLibrary = {
+        assessments: [nextAssessment, ...currentLibrary.assessments],
+        currentAssessmentId: assessmentId,
+      };
+
+      scheduleAutoSave(nextLibrary);
+      return nextLibrary;
+    });
+
+    return assessmentId;
+  }, [scheduleAutoSave]);
+
+  const renameAssessment = useCallback((assessmentId, title) => {
+    const trimmedTitle = title.trim();
+    if (!trimmedTitle) {
+      throw new Error('Assessment title cannot be empty.');
+    }
+
+    setLibrary(currentLibrary => {
+      const nextLibrary = {
+        ...currentLibrary,
+        assessments: currentLibrary.assessments.map(assessment => (
+          assessment.id === assessmentId
+            ? {
+                ...assessment,
+                title: trimmedTitle,
+                template: {
+                  ...assessment.template,
+                  title: trimmedTitle,
+                },
+              }
+            : assessment
+        )),
+      };
+
+      scheduleAutoSave(nextLibrary);
+      return nextLibrary;
+    });
+  }, [scheduleAutoSave]);
 
   const setRating = useCallback((itemId, rating) => {
-    setAssessmentState(prev => {
-      const current = prev[itemId]?.rating;
-      const next = { ...prev, [itemId]: { ...prev[itemId], rating: current === rating ? null : rating } };
-      scheduleAutoSave(next, assessmentSummary);
-      return next;
-    });
-  }, [assessmentSummary, scheduleAutoSave]);
+    updateCurrentAssessment(assessment => {
+      const current = assessment.state[itemId]?.rating;
+      const nextRating = current === rating ? null : rating;
 
-  const setNote = useCallback((itemId, note) => {
-    setAssessmentState(prev => {
-      const next = { ...prev, [itemId]: { ...prev[itemId], note } };
-      scheduleAutoSave(next, assessmentSummary);
-      return next;
-    });
-  }, [assessmentSummary, scheduleAutoSave]);
-
-  const setPillarSummary = useCallback((pillarId, value) => {
-    setAssessmentSummary(prev => {
-      const next = {
-        ...prev,
-        pillars: {
-          ...prev.pillars,
-          [pillarId]: value,
+      return {
+        ...assessment,
+        state: {
+          ...assessment.state,
+          [itemId]: {
+            ...assessment.state[itemId],
+            rating: nextRating,
+          },
         },
       };
-      scheduleAutoSave(assessmentState, next);
-      return next;
     });
-  }, [assessmentState, scheduleAutoSave]);
+  }, [updateCurrentAssessment]);
+
+  const setNote = useCallback((itemId, note) => {
+    updateCurrentAssessment(assessment => ({
+      ...assessment,
+      state: {
+        ...assessment.state,
+        [itemId]: {
+          ...assessment.state[itemId],
+          note,
+        },
+      },
+    }));
+  }, [updateCurrentAssessment]);
+
+  const setPillarSummary = useCallback((pillarId, value) => {
+    updateCurrentAssessment(assessment => ({
+      ...assessment,
+      summary: {
+        ...assessment.summary,
+        pillars: {
+          ...assessment.summary.pillars,
+          [pillarId]: value,
+        },
+      },
+    }));
+  }, [updateCurrentAssessment]);
 
   const saveNow = useCallback(() => {
-    setAssessmentState(currentState => {
-      setAssessmentSummary(currentSummary => {
-        persistToStorage(currentState, currentSummary);
-        return currentSummary;
-      });
-      return currentState;
-    });
-  }, [persistToStorage]);
+    clearTimeout(autoSaveTimer.current);
+    persistToStorage(library);
+  }, [library, persistToStorage]);
 
   const reset = useCallback(() => {
-    const defaultState = buildDefaultState();
-    const defaultSummary = buildDefaultSummary();
-    setAssessmentState(defaultState);
-    setAssessmentSummary(defaultSummary);
-    persistToStorage(defaultState, defaultSummary);
-  }, [persistToStorage]);
+    updateCurrentAssessment(assessment => ({
+      ...assessment,
+      state: normalizeAssessmentState(assessment.template, null),
+      summary: normalizeAssessmentSummary(assessment.template, null),
+    }), 'immediate');
+  }, [updateCurrentAssessment]);
 
   const importState = useCallback((payload) => {
     if (!payload || typeof payload !== 'object') {
       throw new Error('That file is not a valid assessment export.');
     }
 
-    if (payload.app !== 'doe-self-assessment') {
+    if (payload.app !== APP_ID) {
       throw new Error('That file is not from this assessment app.');
     }
 
-    const nextState = normalizeAssessmentState(payload.state);
-    const nextSummary = normalizeAssessmentSummary(payload.summary);
-    clearTimeout(autoSaveTimer.current);
-    setAssessmentState(nextState);
-    setAssessmentSummary(nextSummary);
-    persistToStorage(nextState, nextSummary);
-  }, [persistToStorage]);
+    updateCurrentAssessment(assessment => {
+      const importedAssessment = payload.assessment && typeof payload.assessment === 'object'
+        ? payload.assessment
+        : payload;
+      const template = importedAssessment.template
+        ? normalizeTemplate(importedAssessment.template, assessment.template)
+        : assessment.template;
 
-  useEffect(() => () => clearTimeout(autoSaveTimer.current), []);
+      return {
+        ...assessment,
+        title: typeof importedAssessment.title === 'string' && importedAssessment.title.trim()
+          ? importedAssessment.title.trim()
+          : assessment.title,
+        template,
+        state: normalizeAssessmentState(template, importedAssessment.state),
+        summary: normalizeAssessmentSummary(template, importedAssessment.summary),
+      };
+    }, 'immediate');
+  }, [updateCurrentAssessment]);
+
+  useEffect(() => () => {
+    clearTimeout(autoSaveTimer.current);
+    clearTimeout(savedIndicatorTimer.current);
+  }, []);
 
   return {
-    assessmentState,
-    assessmentSummary,
-    savedAt,
+    assessments: library.assessments,
+    currentAssessmentId: currentAssessment.id,
+    currentAssessment,
     justSaved,
+    openAssessment,
+    createAssessment,
+    renameAssessment,
     setRating,
     setNote,
     setPillarSummary,

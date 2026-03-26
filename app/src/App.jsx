@@ -1,31 +1,25 @@
-import { useRef } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import { useAssessment } from './hooks/useAssessment';
-import { exportAssessmentData, exportMarkdown } from './utils/export';
-import { PILLARS } from './data/pillars';
+import { exportAssessmentData, exportCsv, exportMarkdown } from './utils/export';
+import { buildAssessmentFromCsv } from './utils/csv';
+import { buildPillarStartIndexes, flattenItems, getTotalResponsibilities } from './utils/assessmentModel';
 import { Header } from './components/Header';
 import { SummaryBar } from './components/SummaryBar';
 import { ScaleLegend } from './components/ScaleLegend';
 import { Pillar } from './components/Pillar';
-
-const totalResponsibilities = PILLARS.reduce((sum, pillar) => sum + pillar.items.length, 0);
-const pillarStartIndexes = PILLARS.reduce((starts, pillar, index) => {
-  if (index === 0) {
-    starts[pillar.id] = 1;
-  } else {
-    const previousPillar = PILLARS[index - 1];
-    starts[pillar.id] = starts[previousPillar.id] + previousPillar.items.length;
-  }
-
-  return starts;
-}, {});
+import { AssessmentLibrary } from './components/AssessmentLibrary';
 
 export default function App() {
-  const fileInputRef = useRef(null);
+  const jsonImportRef = useRef(null);
+  const csvImportRef = useRef(null);
+  const [view, setView] = useState('library');
   const {
-    assessmentState,
-    assessmentSummary,
-    savedAt,
+    assessments,
+    currentAssessment,
     justSaved,
+    openAssessment,
+    createAssessment,
+    renameAssessment,
     setRating,
     setNote,
     setPillarSummary,
@@ -34,8 +28,39 @@ export default function App() {
     importState,
   } = useAssessment();
 
+  const totalResponsibilities = useMemo(
+    () => getTotalResponsibilities(currentAssessment.template),
+    [currentAssessment.template]
+  );
+  const pillarStartIndexes = useMemo(
+    () => buildPillarStartIndexes(currentAssessment.template),
+    [currentAssessment.template]
+  );
+  const summaryItems = useMemo(
+    () => flattenItems(currentAssessment.template),
+    [currentAssessment.template]
+  );
+
+  function handleOpenAssessment(assessmentId) {
+    openAssessment(assessmentId);
+    setView('assessment');
+  }
+
+  function handleRenameAssessment(assessmentId = currentAssessment.id) {
+    const assessment = assessments.find(entry => entry.id === assessmentId) ?? currentAssessment;
+    const nextTitle = prompt('Assessment title', assessment.title);
+
+    if (nextTitle == null) return;
+
+    try {
+      renameAssessment(assessmentId, nextTitle);
+    } catch (error) {
+      alert(error instanceof Error ? error.message : 'Unable to rename assessment.');
+    }
+  }
+
   function handleReset() {
-    if (confirm('Reset all ratings, notes, and pillar summaries to the original imported values? This cannot be undone.')) {
+    if (confirm('Reset all ratings, notes, and pillar reflections to their original imported values? This cannot be undone.')) {
       reset();
     }
   }
@@ -55,35 +80,123 @@ export default function App() {
     }
   }
 
+  async function handleCreateFromCsv(event) {
+    const file = event.target.files?.[0];
+    event.target.value = '';
+
+    if (!file) return;
+
+    try {
+      const importedAssessment = buildAssessmentFromCsv(await file.text(), file.name);
+      createAssessment({
+        title: importedAssessment.title,
+        template: importedAssessment.template,
+        state: importedAssessment.state,
+        summary: importedAssessment.summary,
+        source: 'csv',
+      });
+      setView('assessment');
+    } catch (error) {
+      alert(error instanceof Error ? error.message : 'Unable to create an assessment from that CSV.');
+    }
+  }
+
+  function handleExport(exportAction, event) {
+    exportAction();
+    event.currentTarget.closest('details')?.removeAttribute('open');
+  }
+
+  if (view === 'library') {
+    return (
+      <>
+        <Header
+          title="Assessment Library"
+          subtitle={`${assessments.length} saved assessments`}
+          actions={<button className="btn btn-data" onClick={() => csvImportRef.current?.click()}>New from CSV</button>}
+        />
+        <input
+          ref={csvImportRef}
+          className="visually-hidden"
+          type="file"
+          accept=".csv,text/csv"
+          onChange={handleCreateFromCsv}
+        />
+        <AssessmentLibrary
+          assessments={assessments}
+          currentAssessmentId={currentAssessment.id}
+          onOpen={handleOpenAssessment}
+          onRename={handleRenameAssessment}
+          onCreate={() => csvImportRef.current?.click()}
+        />
+      </>
+    );
+  }
+
   return (
     <>
       <Header
-        savedAt={savedAt}
+        title={currentAssessment.title}
+        subtitle={currentAssessment.template.subtitle || 'Custom assessment'}
+        savedAt={currentAssessment.savedAt}
         justSaved={justSaved}
-        onSave={saveNow}
-        onExportData={() => exportAssessmentData(assessmentState, assessmentSummary, savedAt)}
-        onImportData={() => fileInputRef.current?.click()}
-        onExportMarkdown={() => exportMarkdown(assessmentState, assessmentSummary)}
-        onReset={handleReset}
+        onBack={() => setView('library')}
+        actions={(
+          <>
+            <button className="btn btn-save" onClick={saveNow}>Save</button>
+            <button className="btn btn-import" onClick={() => handleRenameAssessment()}>Rename</button>
+            <button className="btn btn-import" onClick={() => jsonImportRef.current?.click()}>Import Data</button>
+            <details className="export-menu">
+              <summary className="btn btn-export">Export</summary>
+              <div className="export-menu-list">
+                <button
+                  type="button"
+                  className="export-menu-item"
+                  onClick={event => handleExport(() => exportAssessmentData(currentAssessment), event)}
+                >
+                  JSON backup
+                </button>
+                <button
+                  type="button"
+                  className="export-menu-item"
+                  onClick={event => handleExport(() => exportMarkdown(currentAssessment), event)}
+                >
+                  Markdown
+                </button>
+                <button
+                  type="button"
+                  className="export-menu-item"
+                  onClick={event => handleExport(() => exportCsv(currentAssessment), event)}
+                >
+                  CSV for import
+                </button>
+              </div>
+            </details>
+            <button className="btn btn-reset" onClick={handleReset}>Reset</button>
+          </>
+        )}
       />
       <input
-        ref={fileInputRef}
+        ref={jsonImportRef}
         className="visually-hidden"
         type="file"
         accept=".json,application/json"
         onChange={handleImportFile}
       />
-      <SummaryBar assessmentState={assessmentState} />
+      <SummaryBar
+        assessmentState={currentAssessment.state}
+        items={summaryItems}
+        showAverage
+      />
       <main className="main">
         <ScaleLegend />
-        {PILLARS.map(pillar => (
+        {currentAssessment.template.pillars.map(pillar => (
           <Pillar
             key={pillar.id}
             pillar={pillar}
-            assessmentState={assessmentState}
+            assessmentState={currentAssessment.state}
             startIndex={pillarStartIndexes[pillar.id]}
             totalResponsibilities={totalResponsibilities}
-            summaryText={assessmentSummary.pillars[pillar.id] ?? ''}
+            summaryText={currentAssessment.summary.pillars[pillar.id] ?? ''}
             onRate={setRating}
             onNote={setNote}
             onSummaryChange={value => setPillarSummary(pillar.id, value)}
