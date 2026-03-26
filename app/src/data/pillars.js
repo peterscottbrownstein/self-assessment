@@ -6,6 +6,14 @@ export const RATINGS = {
   5: 'Strong',
 };
 
+export const RATING_DEFINITIONS = {
+  1: 'I am aware this is a gap and need to build capability',
+  2: 'I am working on this but not yet consistent',
+  3: 'I am doing this regularly but still refining approach',
+  4: 'I perform this well and reliably',
+  5: 'I perform this at a high level and help others do the same',
+};
+
 // prev values imported from prior 1-3 scale: Developing -> 2, Proficient -> 4, Strong -> 5
 export const PILLARS = [
   {

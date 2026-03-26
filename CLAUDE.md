@@ -21,6 +21,7 @@ A self-assessment web app for a Director of Engineering role at Marcura/Navigato
 - Reflection summaries now live under each pillar instead of in one bottom-level summary section
 - Responsibilities are numbered globally across the full assessment instead of restarting within each pillar
 - Each pillar now also shows its own rating summary bar in addition to the global summary at the top
+- Rating definitions are stored centrally and shown through a compact expandable scale legend
 - Shared VS Code debugging is configured in `.vscode/launch.json` and `.vscode/tasks.json` so `F5` can start Vite and open the app in Chrome
 
 ## Running the React App
@@ -40,13 +41,13 @@ Update this file before committing when a change adds context another assistant 
 ## Architecture (`app/src/`)
 
 ```text
-data/pillars.js        - PILLARS array and RATINGS map (all assessment content lives here)
+data/pillars.js        - PILLARS array plus rating labels/definitions (all assessment content lives here)
 hooks/useAssessment.js - ratings, notes, per-pillar summaries, localStorage, auto-save, and import validation/normalization
 utils/export.js        - Markdown export plus versioned JSON backup export
 components/
   Header.jsx           - sticky header with save/export/import/reset actions
   SummaryBar.jsx       - reusable chip counts + color-coded progress bar for the global and per-pillar summaries
-  ScaleLegend.jsx      - rating scale reference card
+  ScaleLegend.jsx      - compact rating scale reference card with expandable definitions
   Pillar.jsx           - collapsible pillar section plus per-pillar summary area
   PillarSummary.jsx    - textarea UI for the written reflection under each pillar
   Item.jsx             - individual competency row with rating buttons, notes, and global responsibility numbering
@@ -56,7 +57,7 @@ components/
 
 **State:** `useAssessment` holds a flat object keyed by item `id`, each value `{ rating: number|null, note: string }`. It also stores `summary.pillars[pillarId]` for the written reflection under each pillar. The app initializes from `prev` values and merges in localStorage data on load.
 
-**Rating scale:** 1 = On radar for growth, 2 = Developing, 3 = Iterating, 4 = Proficient, 5 = Strong.
+**Rating scale:** 1 = On radar for growth, 2 = Developing, 3 = Iterating, 4 = Proficient, 5 = Strong. Full definitions are stored with the shared rating metadata and exposed through the expandable legend.
 
 **Persistence:** Auto-saves to localStorage key `doe-self-assessment` about 1.5s after any change. `saveNow` triggers an immediate save.
 

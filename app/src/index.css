@@ -160,10 +160,58 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
   background: white; border: 1px solid var(--border); border-radius: 8px;
   padding: 16px 20px; margin-bottom: 28px;
 }
-.scale-legend h3 { font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); margin-bottom: 12px; }
-.legend-items { display: flex; gap: 8px; flex-wrap: wrap; }
-.legend-item { display: flex; align-items: center; gap: 6px; font-size: 0.78rem; }
+.scale-legend-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+.scale-legend h3 { font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); }
+.legend-toggle {
+  border: none;
+  background: transparent;
+  color: #4a90d9;
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 0;
+}
+.legend-toggle:hover { color: #357abd; }
+.legend-items { gap: 10px; }
+.legend-items-compact {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.legend-items-expanded {
+  display: grid;
+  margin-top: 14px;
+}
+.legend-item {
+  display: grid;
+  grid-template-columns: 12px 1fr;
+  gap: 10px;
+  align-items: start;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: #fbfcfe;
+}
+.legend-item-compact {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 10px;
+  font-size: 0.78rem;
+}
+.legend-item-expanded {
+  display: grid;
+}
 .legend-swatch { width: 12px; height: 12px; border-radius: 3px; flex-shrink: 0; }
+.legend-copy { display: grid; gap: 4px; }
+.legend-title { display: flex; align-items: center; gap: 6px; font-size: 0.8rem; }
+.legend-definition { font-size: 0.8rem; color: var(--muted); line-height: 1.45; }
 .ls-1 { background: var(--r1); }
 .ls-2 { background: var(--r2); }
 .ls-3 { background: var(--r3); }
@@ -211,6 +259,11 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
 }
 
 @media (max-width: 720px) {
+  .scale-legend-header {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
   .pillar-summary textarea {
     min-height: 150px;
   }

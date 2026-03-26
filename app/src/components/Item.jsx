@@ -24,7 +24,6 @@ export function Item({ item, itemState, position, totalResponsibilities, onRate,
               key={r}
               className={`rating-btn ${rating === r ? `active-${r}` : ''}`}
               onClick={() => onRate(item.id, r)}
-              title={RATINGS[r]}
             >
               {r} - {RATINGS[r]}
             </button>
