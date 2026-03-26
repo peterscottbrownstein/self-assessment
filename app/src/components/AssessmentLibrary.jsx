@@ -68,6 +68,7 @@ export function AssessmentLibrary({
   isUploading = false,
   showArchived = false,
   onToggleArchived,
+  onDownloadSample,
 }) {
   return (
     <main className="main">
@@ -94,6 +95,46 @@ export function AssessmentLibrary({
           <button className="btn btn-data" onClick={onCreate} disabled={isUploading}>
             {isUploading ? 'Uploading...' : 'New from CSV'}
           </button>
+          <details className="template-menu">
+            <summary className="btn btn-import template-menu-trigger">
+              Download CSV Template
+              <span className="template-menu-caret" aria-hidden="true">v</span>
+            </summary>
+            <div className="template-menu-list">
+              <button
+                type="button"
+                className="template-menu-item"
+                onClick={event => onDownloadSample('responsibilities_only', event)}
+                disabled={isUploading}
+              >
+                Responsibilities only
+              </button>
+              <button
+                type="button"
+                className="template-menu-item"
+                onClick={event => onDownloadSample('categories_and_responsibilities', event)}
+                disabled={isUploading}
+              >
+                Categories + responsibilities
+              </button>
+              <button
+                type="button"
+                className="template-menu-item"
+                onClick={event => onDownloadSample('categories_with_ratings', event)}
+                disabled={isUploading}
+              >
+                With ratings
+              </button>
+              <button
+                type="button"
+                className="template-menu-item"
+                onClick={event => onDownloadSample('categories_with_notes', event)}
+                disabled={isUploading}
+              >
+                With ratings + notes
+              </button>
+            </div>
+          </details>
         </div>
       </section>
 

@@ -1,6 +1,6 @@
 import { RATINGS, RATING_DEFINITIONS } from '../data/pillars';
 import { APP_ID, flattenItems } from './assessmentModel';
-import { buildTemplateSlug } from './csv';
+import { buildSampleCsv, buildTemplateSlug } from './csv';
 
 const BACKUP_VERSION = 2;
 
@@ -11,6 +11,21 @@ function downloadFile(contents, mimeType, filename) {
   a.download = filename;
   a.click();
   URL.revokeObjectURL(a.href);
+}
+
+export function downloadSampleCsv(variant) {
+  const filenames = {
+    responsibilities_only: 'assessment-template-responsibilities.csv',
+    categories_and_responsibilities: 'assessment-template-categories.csv',
+    categories_with_ratings: 'assessment-template-ratings.csv',
+    categories_with_notes: 'assessment-template-notes.csv',
+  };
+
+  downloadFile(
+    buildSampleCsv(variant),
+    'text/csv',
+    filenames[variant] || 'assessment-template.csv'
+  );
 }
 
 function escapeCsvValue(value) {

@@ -265,14 +265,39 @@ export function buildTemplateFromCsv(text, filename = 'uploaded-assessment.csv')
   return buildAssessmentFromCsv(text, filename).template;
 }
 
-export function buildSampleCsv() {
-  return [
-    'category,responsibility',
-    'Technical Vision,Defines a coherent technical strategy for the platform',
-    'Technical Vision,Balances modernization work with delivery needs',
-    'Delivery,Creates clear roadmaps and delivery visibility',
-    'People Leadership,Builds leadership capability across the team',
-  ].join('\n');
+export function buildSampleCsv(variant = 'categories_with_notes') {
+  const templates = {
+    responsibilities_only: [
+      'responsibility',
+      'Defines a coherent technical strategy for the platform',
+      'Balances modernization work with delivery needs',
+      'Creates clear roadmaps and delivery visibility',
+      'Builds leadership capability across the team',
+    ],
+    categories_and_responsibilities: [
+      'category,responsibility',
+      'Technical Vision,Defines a coherent technical strategy for the platform',
+      'Technical Vision,Balances modernization work with delivery needs',
+      'Delivery,Creates clear roadmaps and delivery visibility',
+      'People Leadership,Builds leadership capability across the team',
+    ],
+    categories_with_ratings: [
+      'category,responsibility,rating',
+      'Technical Vision,Defines a coherent technical strategy for the platform,4',
+      'Technical Vision,Balances modernization work with delivery needs,3',
+      'Delivery,Creates clear roadmaps and delivery visibility,2',
+      'People Leadership,Builds leadership capability across the team,5',
+    ],
+    categories_with_notes: [
+      'category,responsibility,rating,note',
+      'Technical Vision,Defines a coherent technical strategy for the platform,4,"Clear direction across platform work"',
+      'Technical Vision,Balances modernization work with delivery needs,3,"Still refining how this gets documented"',
+      'Delivery,Creates clear roadmaps and delivery visibility,2,"Needs stronger measurement discipline"',
+      'People Leadership,Builds leadership capability across the team,5,"Strong coaching and support across leads"',
+    ],
+  };
+
+  return (templates[variant] || templates.categories_with_notes).join('\n');
 }
 
 export function buildTemplateSlug(templateTitle) {

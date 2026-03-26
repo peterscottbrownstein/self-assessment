@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useAssessment } from './hooks/useAssessment';
-import { exportAssessmentData, exportCsv, exportMarkdown } from './utils/export';
+import { downloadSampleCsv, exportAssessmentData, exportCsv, exportMarkdown } from './utils/export';
 import { buildAssessmentFromCsv, buildDefaultAssessmentTitle } from './utils/csv';
 import { buildPillarStartIndexes, flattenItems, getTotalResponsibilities } from './utils/assessmentModel';
 import { Header } from './components/Header';
@@ -194,6 +194,11 @@ export default function App() {
     event.currentTarget.closest('details')?.removeAttribute('open');
   }
 
+  function handleSampleDownload(variant, event) {
+    downloadSampleCsv(variant);
+    event.currentTarget.closest('details')?.removeAttribute('open');
+  }
+
   if (view === 'library') {
     return (
       <>
@@ -227,6 +232,7 @@ export default function App() {
           isUploading={isBusy}
           showArchived={showArchived}
           onToggleArchived={() => setShowArchived(current => !current)}
+          onDownloadSample={handleSampleDownload}
         />
         {isBusy && (
           <div className="app-overlay" role="status" aria-live="polite">

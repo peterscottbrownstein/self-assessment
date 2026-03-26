@@ -29,6 +29,7 @@ A self-assessment web app for a Director of Engineering role at Marcura/Navigato
 - New assessments can be created from CSV uploads, either as a plain responsibility list or grouped by category/pillar
 - The library screen now includes an optional upload title field; if left blank, new CSV assessments default to `Self-Assessment MM/DD/YYYY`
 - CSV import can optionally restore `rating`, `note`, and `pillar_reflection` data when those columns are present
+- The library screen now provides a `Download CSV Template` dropdown with starter formats for responsibilities only, categories, ratings, and notes
 - The assessment editor header now uses a single Export dropdown for JSON backup, Markdown, and round-trip CSV export
 - The assessment library keeps the CSV format guide collapsed by default and uses in-app loading overlays plus success/error toasts for CSV and JSON imports
 - Custom assessments can now be archived and restored; archived items are hidden from the main active list and shown in a separate revealable section in the library
