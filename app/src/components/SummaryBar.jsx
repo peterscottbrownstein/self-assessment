@@ -1,18 +1,29 @@
 import { PILLARS, RATINGS } from '../data/pillars';
 
-export function SummaryBar({ assessmentState }) {
+function buildCounts(items, assessmentState) {
   const counts = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0, null: 0 };
-  PILLARS.forEach(p =>
-    p.items.forEach(item => {
-      const r = assessmentState[item.id]?.rating ?? null;
-      counts[r] = (counts[r] || 0) + 1;
-    })
-  );
-  const total = PILLARS.reduce((sum, p) => sum + p.items.length, 0);
+
+  items.forEach(item => {
+    const r = assessmentState[item.id]?.rating ?? null;
+    counts[r] = (counts[r] || 0) + 1;
+  });
+
+  return counts;
+}
+
+export function SummaryBar({
+  assessmentState,
+  items,
+  title = 'Summary',
+  className = '',
+}) {
+  const summaryItems = items ?? PILLARS.flatMap(pillar => pillar.items);
+  const counts = buildCounts(summaryItems, assessmentState);
+  const total = summaryItems.length;
 
   return (
-    <div className="summary-bar">
-      <h2>Summary</h2>
+    <div className={`summary-bar ${className}`.trim()}>
+      <h2>{title}</h2>
       <div className="summary-chips">
         {[1, 2, 3, 4, 5].map(r =>
           counts[r] > 0 ? (
@@ -35,7 +46,7 @@ export function SummaryBar({ assessmentState }) {
             <div
               key={r}
               className={`progress-seg seg-${r}`}
-              style={{ width: `${(counts[r] / total) * 100}%` }}
+              style={{ width: total > 0 ? `${(counts[r] / total) * 100}%` : '0%' }}
             />
           ))}
         </div>

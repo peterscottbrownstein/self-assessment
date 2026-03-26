@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Item } from './Item';
 import { PillarSummary } from './PillarSummary';
+import { SummaryBar } from './SummaryBar';
 
 export function Pillar({
   pillar,
@@ -26,6 +27,12 @@ export function Pillar({
       </div>
       {!collapsed && (
         <div className="pillar-body">
+          <SummaryBar
+            assessmentState={assessmentState}
+            items={pillar.items}
+            title="Pillar Summary"
+            className="summary-bar-pillar"
+          />
           {pillar.items.map((item, index) => (
             <Item
               key={item.id}

@@ -20,6 +20,7 @@ A self-assessment web app for a Director of Engineering role at Marcura/Navigato
 - Assessment data can now be exported/imported as a versioned JSON backup file, separate from the Markdown export
 - Reflection summaries now live under each pillar instead of in one bottom-level summary section
 - Responsibilities are numbered globally across the full assessment instead of restarting within each pillar
+- Each pillar now also shows its own rating summary bar in addition to the global summary at the top
 - Shared VS Code debugging is configured in `.vscode/launch.json` and `.vscode/tasks.json` so `F5` can start Vite and open the app in Chrome
 
 ## Running the React App
@@ -44,7 +45,7 @@ hooks/useAssessment.js - ratings, notes, per-pillar summaries, localStorage, aut
 utils/export.js        - Markdown export plus versioned JSON backup export
 components/
   Header.jsx           - sticky header with save/export/import/reset actions
-  SummaryBar.jsx       - live chip counts + color-coded progress bar
+  SummaryBar.jsx       - reusable chip counts + color-coded progress bar for the global and per-pillar summaries
   ScaleLegend.jsx      - rating scale reference card
   Pillar.jsx           - collapsible pillar section plus per-pillar summary area
   PillarSummary.jsx    - textarea UI for the written reflection under each pillar
@@ -62,3 +63,5 @@ components/
 **Backup/import:** Structured assessment backups are exported as versioned JSON and can be imported back into the app. Import normalizes data against the current item ids and accepts partial payloads safely. Markdown export remains separate and now includes any pillar summaries under the corresponding pillar sections.
 
 **Numbering:** Responsibilities are displayed and exported with one continuous number across all pillars so progress can be read as `X of total` anywhere in the assessment.
+
+**Summaries:** The top of the page shows the rating mix for the whole assessment, and each pillar now includes its own local summary bar for that pillar's ratings.
