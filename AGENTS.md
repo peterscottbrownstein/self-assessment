@@ -29,6 +29,7 @@ A self-assessment web app for a Director of Engineering role at Marcura/Navigato
 - New assessments can be created from CSV uploads, either as a plain responsibility list or grouped by category/pillar
 - CSV import can optionally restore `rating`, `note`, and `pillar_reflection` data when those columns are present
 - The assessment editor header now uses a single Export dropdown for JSON backup, Markdown, and round-trip CSV export
+- The assessment library keeps the CSV format guide collapsed by default and uses in-app loading overlays plus success/error toasts for CSV and JSON imports
 - Shared VS Code debugging is configured in `.vscode/launch.json` and `.vscode/tasks.json` so `F5` can start Vite and open the app in Chrome
 
 ## Running the React App
@@ -56,6 +57,7 @@ utils/export.js        - JSON backup, Markdown export, and round-trip CSV export
 components/
   Header.jsx           - sticky header with flexible actions and measured offset for sticky pillar sections
   AssessmentLibrary.jsx - landing page for viewing, opening, renaming, and creating assessments from CSV
+  ToastStack.jsx       - shared success/error toast UI for import and upload feedback
   SummaryBar.jsx       - reusable chip counts + color-coded progress bar for the global and per-pillar summaries, plus a global average score
   ScaleLegend.jsx      - compact rating scale reference card with expandable definitions
   Pillar.jsx           - collapsible pillar section with a sticky pillar header + rating summary block

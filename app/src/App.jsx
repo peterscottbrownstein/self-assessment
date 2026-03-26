@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useAssessment } from './hooks/useAssessment';
 import { exportAssessmentData, exportCsv, exportMarkdown } from './utils/export';
 import { buildAssessmentFromCsv } from './utils/csv';
@@ -8,11 +8,21 @@ import { SummaryBar } from './components/SummaryBar';
 import { ScaleLegend } from './components/ScaleLegend';
 import { Pillar } from './components/Pillar';
 import { AssessmentLibrary } from './components/AssessmentLibrary';
+import { ToastStack } from './components/ToastStack';
+
+function waitForNextPaint() {
+  return new Promise(resolve => {
+    requestAnimationFrame(() => resolve());
+  });
+}
 
 export default function App() {
   const jsonImportRef = useRef(null);
   const csvImportRef = useRef(null);
+  const toastTimersRef = useRef(new Map());
   const [view, setView] = useState('library');
+  const [busyMessage, setBusyMessage] = useState('');
+  const [toasts, setToasts] = useState([]);
   const {
     assessments,
     currentAssessment,
@@ -40,6 +50,34 @@ export default function App() {
     () => flattenItems(currentAssessment.template),
     [currentAssessment.template]
   );
+  const isBusy = busyMessage.length > 0;
+
+  useEffect(() => () => {
+    toastTimersRef.current.forEach(timerId => clearTimeout(timerId));
+    toastTimersRef.current.clear();
+  }, []);
+
+  function dismissToast(toastId) {
+    const timerId = toastTimersRef.current.get(toastId);
+    if (timerId) {
+      clearTimeout(timerId);
+      toastTimersRef.current.delete(toastId);
+    }
+
+    setToasts(currentToasts => currentToasts.filter(toast => toast.id !== toastId));
+  }
+
+  function showToast(message, type = 'success') {
+    const toastId = `${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+    setToasts(currentToasts => [...currentToasts, { id: toastId, message, type }]);
+
+    const timerId = setTimeout(() => {
+      setToasts(currentToasts => currentToasts.filter(toast => toast.id !== toastId));
+      toastTimersRef.current.delete(toastId);
+    }, 4500);
+
+    toastTimersRef.current.set(toastId, timerId);
+  }
 
   function handleOpenAssessment(assessmentId) {
     openAssessment(assessmentId);
@@ -55,7 +93,7 @@ export default function App() {
     try {
       renameAssessment(assessmentId, nextTitle);
     } catch (error) {
-      alert(error instanceof Error ? error.message : 'Unable to rename assessment.');
+      showToast(error instanceof Error ? error.message : 'Unable to rename assessment.', 'error');
     }
   }
 
@@ -72,11 +110,15 @@ export default function App() {
     if (!file) return;
 
     try {
+      setBusyMessage('Importing saved assessment...');
+      await waitForNextPaint();
       const payload = JSON.parse(await file.text());
       importState(payload);
-      alert('Assessment data imported successfully.');
+      showToast('Assessment data imported successfully.');
     } catch (error) {
-      alert(error instanceof Error ? error.message : 'Unable to import that file.');
+      showToast(error instanceof Error ? error.message : 'Unable to import that file.', 'error');
+    } finally {
+      setBusyMessage('');
     }
   }
 
@@ -87,6 +129,8 @@ export default function App() {
     if (!file) return;
 
     try {
+      setBusyMessage(`Creating assessment from ${file.name}...`);
+      await waitForNextPaint();
       const importedAssessment = buildAssessmentFromCsv(await file.text(), file.name);
       createAssessment({
         title: importedAssessment.title,
@@ -96,8 +140,11 @@ export default function App() {
         source: 'csv',
       });
       setView('assessment');
+      showToast(`Created assessment from ${file.name}.`);
     } catch (error) {
-      alert(error instanceof Error ? error.message : 'Unable to create an assessment from that CSV.');
+      showToast(error instanceof Error ? error.message : 'Unable to create an assessment from that CSV.', 'error');
+    } finally {
+      setBusyMessage('');
     }
   }
 
@@ -112,7 +159,11 @@ export default function App() {
         <Header
           title="Assessment Library"
           subtitle={`${assessments.length} saved assessments`}
-          actions={<button className="btn btn-data" onClick={() => csvImportRef.current?.click()}>New from CSV</button>}
+          actions={(
+            <button className="btn btn-data" onClick={() => csvImportRef.current?.click()} disabled={isBusy}>
+              {isBusy ? 'Uploading...' : 'New from CSV'}
+            </button>
+          )}
         />
         <input
           ref={csvImportRef}
@@ -127,7 +178,17 @@ export default function App() {
           onOpen={handleOpenAssessment}
           onRename={handleRenameAssessment}
           onCreate={() => csvImportRef.current?.click()}
+          isUploading={isBusy}
         />
+        {isBusy && (
+          <div className="app-overlay" role="status" aria-live="polite">
+            <div className="app-overlay-card">
+              <div className="loading-spinner" />
+              <p>{busyMessage}</p>
+            </div>
+          </div>
+        )}
+        <ToastStack toasts={toasts} onDismiss={dismissToast} />
       </>
     );
   }
@@ -203,6 +264,15 @@ export default function App() {
           />
         ))}
       </main>
+      {isBusy && (
+        <div className="app-overlay" role="status" aria-live="polite">
+          <div className="app-overlay-card">
+            <div className="loading-spinner" />
+            <p>{busyMessage}</p>
+          </div>
+        </div>
+      )}
+      <ToastStack toasts={toasts} onDismiss={dismissToast} />
     </>
   );
 }

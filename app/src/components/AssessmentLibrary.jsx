@@ -16,6 +16,7 @@ export function AssessmentLibrary({
   onOpen,
   onRename,
   onCreate,
+  isUploading = false,
 }) {
   return (
     <main className="main">
@@ -28,26 +29,33 @@ export function AssessmentLibrary({
             becomes its own reusable assessment with saved ratings, notes, and reflections.
           </p>
         </div>
-        <button className="btn btn-data" onClick={onCreate}>New from CSV</button>
+        <button className="btn btn-data" onClick={onCreate} disabled={isUploading}>
+          {isUploading ? 'Uploading...' : 'New from CSV'}
+        </button>
       </section>
 
-      <section className="csv-help">
-        <h3>CSV Format</h3>
-        <p>
-          Use either a single responsibility column or a category plus responsibility format.
-          Header names like <code>responsibility</code>, <code>item</code>, <code>category</code>,
-          and <code>pillar</code> are recognized automatically. Optional columns like
-          <code> rating</code>, <code>note</code>, and <code>pillar_reflection</code> will also
-          be imported when present.
-        </p>
-        <pre>{`responsibility
+      <details className="csv-help">
+        <summary className="csv-help-summary">
+          <span>CSV format guide</span>
+          <span className="csv-help-summary-hint">Show example</span>
+        </summary>
+        <div className="csv-help-body">
+          <p>
+            Use either a single responsibility column or a category plus responsibility format.
+            Header names like <code>responsibility</code>, <code>item</code>, <code>category</code>,
+            and <code>pillar</code> are recognized automatically. Optional columns like
+            <code> rating</code>, <code>note</code>, and <code>pillar_reflection</code> will also
+            be imported when present.
+          </p>
+          <pre>{`responsibility
 Defines a coherent technical strategy
 Builds delivery visibility
 
 category,responsibility,rating,note,pillar_reflection
 Technical Vision,Defines a coherent technical strategy,4,"Clear direction across platform work","Strong strategic grounding with room to document more clearly"
 Delivery,Builds delivery visibility,3,"Improved release clarity this year","Needs stronger measurement discipline"`}</pre>
-      </section>
+        </div>
+      </details>
 
       <section className="library-grid">
         {assessments.map(assessment => {
