@@ -24,6 +24,7 @@ A self-assessment web app for a Director of Engineering role at Marcura/Navigato
 - Rating definitions are stored centrally and shown through a compact expandable scale legend
 - Each pillar's header plus `Pillar Rating Summary` now stick under the main header while scrolling; the textarea section is labeled `Pillar Reflection`
 - The global summary now includes a numeric average score calculated from rated responsibilities only
+- The Markdown export now includes a top summary, rating definitions in the scale table, per-pillar rating summaries, `####` responsibility headings, and `Pillar Reflection` labeling
 - Shared VS Code debugging is configured in `.vscode/launch.json` and `.vscode/tasks.json` so `F5` can start Vite and open the app in Chrome
 
 ## Running the React App
@@ -45,7 +46,7 @@ Update this file before committing when a change adds context another assistant 
 ```text
 data/pillars.js        - PILLARS array plus rating labels/definitions (all assessment content lives here)
 hooks/useAssessment.js - ratings, notes, per-pillar summaries, localStorage, auto-save, and import validation/normalization
-utils/export.js        - Markdown export plus versioned JSON backup export
+utils/export.js        - Markdown export plus versioned JSON backup export, including summary and per-pillar reflection formatting
 components/
   Header.jsx           - sticky header with save/export/import/reset actions and measured offset for sticky pillar sections
   SummaryBar.jsx       - reusable chip counts + color-coded progress bar for the global and per-pillar summaries, plus a global average score
@@ -63,7 +64,7 @@ components/
 
 **Persistence:** Auto-saves to localStorage key `doe-self-assessment` about 1.5s after any change. `saveNow` triggers an immediate save.
 
-**Backup/import:** Structured assessment backups are exported as versioned JSON and can be imported back into the app. Import normalizes data against the current item ids and accepts partial payloads safely. Markdown export remains separate and now includes any pillar summaries under the corresponding pillar sections.
+**Backup/import:** Structured assessment backups are exported as versioned JSON and can be imported back into the app. Import normalizes data against the current item ids and accepts partial payloads safely. Markdown export remains separate and now includes a top summary, rating definitions, per-pillar rating summaries, and any `Pillar Reflection` content under the corresponding pillar sections.
 
 **Numbering:** Responsibilities are displayed and exported with one continuous number across all pillars so progress can be read as `X of total` anywhere in the assessment.
 
