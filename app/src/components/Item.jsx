@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { RATINGS } from '../data/pillars';
 
-export function Item({ item, itemState, onRate, onNote }) {
+export function Item({ item, itemState, position, totalResponsibilities, onRate, onNote }) {
   const { rating = null, note = '' } = itemState || {};
   const [notesOpen, setNotesOpen] = useState(!!note?.trim());
 
@@ -9,7 +9,14 @@ export function Item({ item, itemState, onRate, onNote }) {
 
   return (
     <div className={`item ${rating ? `rated-${rating}` : 'unrated'}`}>
-      <p className="item-text">{item.text}</p>
+      <div className="item-heading">
+        <div className="item-position">
+          Responsibility {position} of {totalResponsibilities}
+        </div>
+        <p className="item-text">
+          <span className="item-number">{position}.</span> {item.text}
+        </p>
+      </div>
       <div className="item-controls">
         <div className="rating-group">
           {[1, 2, 3, 4, 5].map(r => (

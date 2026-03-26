@@ -19,6 +19,7 @@ A self-assessment web app for a Director of Engineering role at Marcura/Navigato
 - `app/src/hooks/useAssessment.js` was lightly cleaned up so invalid or missing localStorage data falls back to defaults without failing lint
 - Assessment data can now be exported/imported as a versioned JSON backup file, separate from the Markdown export
 - Reflection summaries now live under each pillar instead of in one bottom-level summary section
+- Responsibilities are numbered globally across the full assessment instead of restarting within each pillar
 - Shared VS Code debugging is configured in `.vscode/launch.json` and `.vscode/tasks.json` so `F5` can start Vite and open the app in Chrome
 
 ## Running the React App
@@ -47,7 +48,7 @@ components/
   ScaleLegend.jsx      - rating scale reference card
   Pillar.jsx           - collapsible pillar section plus per-pillar summary area
   PillarSummary.jsx    - textarea UI for the written reflection under each pillar
-  Item.jsx             - individual competency row with rating buttons and notes
+  Item.jsx             - individual competency row with rating buttons, notes, and global responsibility numbering
 ```
 
 **Data model:** Each item in `PILLARS` has a stable `id` (format: `p1_01`), `text`, and `prev` (pre-populated rating from a prior 1-3 scale: Developing -> 2, Proficient -> 4, Strong -> 5).
@@ -59,3 +60,5 @@ components/
 **Persistence:** Auto-saves to localStorage key `doe-self-assessment` about 1.5s after any change. `saveNow` triggers an immediate save.
 
 **Backup/import:** Structured assessment backups are exported as versioned JSON and can be imported back into the app. Import normalizes data against the current item ids and accepts partial payloads safely. Markdown export remains separate and now includes any pillar summaries under the corresponding pillar sections.
+
+**Numbering:** Responsibilities are displayed and exported with one continuous number across all pillars so progress can be read as `X of total` anywhere in the assessment.

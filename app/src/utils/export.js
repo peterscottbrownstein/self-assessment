@@ -32,6 +32,8 @@ export function exportAssessmentData(assessmentState, assessmentSummary, savedAt
 export function exportMarkdown(assessmentState, assessmentSummary) {
   const today = new Date().toISOString().split('T')[0];
   const counts = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0, null: 0 };
+  const totalResponsibilities = PILLARS.reduce((sum, pillar) => sum + pillar.items.length, 0);
+  let globalIndex = 1;
 
   const lines = [
     '# Director of Engineering - Self Assessment',
@@ -51,15 +53,17 @@ export function exportMarkdown(assessmentState, assessmentSummary) {
     lines.push(`## ${pillar.title}`);
     lines.push('');
 
-    pillar.items.forEach((item, idx) => {
+    pillar.items.forEach(item => {
       const s = assessmentState[item.id] || {};
       const r = s.rating ?? null;
       counts[r] = (counts[r] || 0) + 1;
       const label = r ? `${r} - ${RATINGS[r]}` : 'Unrated';
-      lines.push(`### ${idx + 1}. ${item.text}`);
+      lines.push(`### ${globalIndex}. ${item.text}`);
+      lines.push(`**Responsibility:** ${globalIndex} of ${totalResponsibilities}`);
       lines.push(`**Rating:** ${label}`);
       if (s.note?.trim()) lines.push(`**Notes:** ${s.note.trim()}`);
       lines.push('');
+      globalIndex += 1;
     });
 
     const pillarSummary = assessmentSummary.pillars?.[pillar.id]?.trim();

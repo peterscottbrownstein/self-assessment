@@ -7,6 +7,18 @@ import { SummaryBar } from './components/SummaryBar';
 import { ScaleLegend } from './components/ScaleLegend';
 import { Pillar } from './components/Pillar';
 
+const totalResponsibilities = PILLARS.reduce((sum, pillar) => sum + pillar.items.length, 0);
+const pillarStartIndexes = PILLARS.reduce((starts, pillar, index) => {
+  if (index === 0) {
+    starts[pillar.id] = 1;
+  } else {
+    const previousPillar = PILLARS[index - 1];
+    starts[pillar.id] = starts[previousPillar.id] + previousPillar.items.length;
+  }
+
+  return starts;
+}, {});
+
 export default function App() {
   const fileInputRef = useRef(null);
   const {
@@ -69,6 +81,8 @@ export default function App() {
             key={pillar.id}
             pillar={pillar}
             assessmentState={assessmentState}
+            startIndex={pillarStartIndexes[pillar.id]}
+            totalResponsibilities={totalResponsibilities}
             summaryText={assessmentSummary.pillars[pillar.id] ?? ''}
             onRate={setRating}
             onNote={setNote}
