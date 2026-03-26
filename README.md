@@ -161,4 +161,5 @@ Relevant files:
 
 - `app/` is the primary version going forward.
 - `self-assessment.html` is useful as a fallback/static artifact, but new work should generally target the React app first.
-- `CLAUDE.md` is used as an assistant handoff document and should be updated when changes introduce workflow, architecture, or tooling context that another assistant would need.
+- `AGENTS.md` is the primary assistant handoff document for repo-specific workflow, architecture, and conventions.
+- `CLAUDE.md` exists as a thin compatibility file that points assistants to `README.md` and `AGENTS.md`.
