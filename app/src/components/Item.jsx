@@ -19,7 +19,7 @@ export function Item({ item, itemState, onRate, onNote }) {
               onClick={() => onRate(item.id, r)}
               title={RATINGS[r]}
             >
-              {r} – {RATINGS[r]}
+              {r} - {RATINGS[r]}
             </button>
           ))}
         </div>
@@ -27,13 +27,13 @@ export function Item({ item, itemState, onRate, onNote }) {
           className={`notes-toggle ${hasNote ? 'has-note' : ''}`}
           onClick={() => setNotesOpen(o => !o)}
         >
-          {hasNote ? '✎ Note' : '+ Note'}
+          {hasNote ? 'Edit Note' : '+ Note'}
         </button>
       </div>
       {notesOpen && (
         <div className="notes-area">
           <textarea
-            placeholder="Add context for your rating…"
+            placeholder="Add context for your rating..."
             value={note}
             onChange={e => onNote(item.id, e.target.value)}
           />

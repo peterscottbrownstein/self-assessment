@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Director of Engineering — Self Assessment</title>
+<title>Director of Engineering - Self Assessment</title>
 <style>
   :root {
     --r1: #d9534f; --r1-light: #fdf2f2;
@@ -158,8 +158,8 @@
 
 <header class="site-header">
   <div>
-    <h1>Director of Engineering — Self Assessment</h1>
-    <p>Navigator · Marcura &nbsp;·&nbsp; <span id="last-saved-label">Not yet saved</span></p>
+    <h1>Director of Engineering - Self Assessment</h1>
+    <p>Navigator | Marcura &nbsp;|&nbsp; <span id="last-saved-label">Not yet saved</span></p>
   </div>
   <div class="header-actions">
     <span class="save-indicator" id="save-indicator">Saved</span>
@@ -189,7 +189,7 @@
           legendItems.innerHTML = Object.entries(RATINGS).map(([k, v]) => `
             <div class="legend-item">
               <div class="legend-swatch ls-${k}"></div>
-              <strong>${k}</strong> <span class="legend-sep">·</span> ${v}
+              <strong>${k}</strong> <span class="legend-sep">|</span> ${v}
             </div>
           `).join('');
         });
@@ -210,7 +210,7 @@ const RATINGS = {
   5: 'Strong'
 };
 
-// D=Developing→2, P=Proficient→4, S=Strong→5
+// D=Developing -> 2, P=Proficient -> 4, S=Strong -> 5
 const PILLARS = [
   {
     id: 'p1',
@@ -360,7 +360,7 @@ function renderPillars() {
       <div class="pillar-header" onclick="togglePillar('${pillar.id}')">
         <h2>${pillar.title}</h2>
         <span class="pillar-meta">${ratedCount}/${pillar.items.length} rated</span>
-        <span class="pillar-chevron">▾</span>
+        <span class="pillar-chevron">v</span>
       </div>
       <div class="pillar-body" id="${pillar.id}-body"></div>
     `;
@@ -382,7 +382,7 @@ function renderItem(item) {
 
   const btns = [1,2,3,4,5].map(r => {
     const active = s.rating === r ? ` active-${r}` : '';
-    return `<button class="rating-btn${active}" onclick="setRating('${item.id}', ${r})" title="${RATINGS[r]}">${r} – ${RATINGS[r]}</button>`;
+    return `<button class="rating-btn${active}" onclick="setRating('${item.id}', ${r})" title="${RATINGS[r]}">${r} - ${RATINGS[r]}</button>`;
   }).join('');
 
   const hasNote = s.note && s.note.trim();
@@ -394,11 +394,11 @@ function renderItem(item) {
     <div class="item-controls">
       <div class="rating-group">${btns}</div>
       <button class="notes-toggle${noteBtnClass}" onclick="toggleNotes('${item.id}')" id="notebtn-${item.id}">
-        ${hasNote ? '✎ Note' : '+ Note'}
+        ${hasNote ? 'Edit Note' : '+ Note'}
       </button>
     </div>
     <div class="notes-area${notesOpen}" id="notes-${item.id}">
-      <textarea placeholder="Add context for your rating…" oninput="setNote('${item.id}', this.value)">${escapeHtml(s.note)}</textarea>
+      <textarea placeholder="Add context for your rating..." oninput="setNote('${item.id}', this.value)">${escapeHtml(s.note)}</textarea>
     </div>
   `;
   return el;
@@ -436,7 +436,7 @@ function setNote(itemId, value) {
   const btn = document.getElementById('notebtn-' + itemId);
   if (value.trim()) {
     btn.classList.add('has-note');
-    btn.textContent = '✎ Note';
+    btn.textContent = 'Edit Note';
   } else {
     btn.classList.remove('has-note');
     btn.textContent = '+ Note';
@@ -475,7 +475,7 @@ function updateSummary() {
     if (counts[r] > 0) {
       const chip = document.createElement('div');
       chip.className = `chip chip-${r}`;
-      chip.innerHTML = `<div class="chip-dot"></div>${counts[r]} × ${RATINGS[r]}`;
+      chip.innerHTML = `<div class="chip-dot"></div>${counts[r]} x ${RATINGS[r]}`;
       chips.appendChild(chip);
     }
   });
@@ -504,8 +504,8 @@ function autoSave() {
 function exportMarkdown() {
   const today = new Date().toISOString().split('T')[0];
   const lines = [
-    `# Director of Engineering — Self Assessment`,
-    `Navigator · Marcura`,
+    `# Director of Engineering - Self Assessment`,
+    `Navigator | Marcura`,
     ``,
     `**Date:** ${today}`,
     ``,
@@ -525,7 +525,7 @@ function exportMarkdown() {
     pillar.items.forEach((item, idx) => {
       const s = state[item.id] || {};
       const r = s.rating;
-      const label = r ? `${r} – ${RATINGS[r]}` : 'Unrated';
+      const label = r ? `${r} - ${RATINGS[r]}` : 'Unrated';
       counts[r] = (counts[r] || 0) + 1;
       lines.push(`### ${idx + 1}. ${item.text}`);
       lines.push(`**Rating:** ${label}`);

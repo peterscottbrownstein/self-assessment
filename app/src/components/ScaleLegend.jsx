@@ -9,7 +9,7 @@ export function ScaleLegend() {
           <div key={k} className="legend-item">
             <div className={`legend-swatch ls-${k}`} />
             <strong>{k}</strong>
-            <span className="legend-sep">·</span>
+            <span className="legend-sep">|</span>
             {v}
           </div>
         ))}

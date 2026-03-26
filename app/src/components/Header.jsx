@@ -25,7 +25,7 @@ export function Header({
       <div>
         <h1>Director of Engineering - Self Assessment</h1>
         <p>
-          Navigator · Marcura &nbsp;·&nbsp; {formatTime(savedAt)}
+          Navigator | Marcura &nbsp;|&nbsp; {formatTime(savedAt)}
         </p>
       </div>
       <div className="header-actions">

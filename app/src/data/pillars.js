@@ -6,7 +6,7 @@ export const RATINGS = {
   5: 'Strong',
 };
 
-// prev values imported from prior 1-3 scale: Developing→2, Proficient→4, Strong→5
+// prev values imported from prior 1-3 scale: Developing -> 2, Proficient -> 4, Strong -> 5
 export const PILLARS = [
   {
     id: 'p1',

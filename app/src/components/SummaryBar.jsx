@@ -18,7 +18,7 @@ export function SummaryBar({ assessmentState }) {
           counts[r] > 0 ? (
             <div key={r} className={`chip chip-${r}`}>
               <div className="chip-dot" />
-              {counts[r]} × {RATINGS[r]}
+              {counts[r]} x {RATINGS[r]}
             </div>
           ) : null
         )}

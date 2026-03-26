@@ -10,7 +10,7 @@ export function Pillar({ pillar, assessmentState, onRate, onNote }) {
       <div className="pillar-header" onClick={() => setCollapsed(c => !c)}>
         <h2>{pillar.title}</h2>
         <span className="pillar-meta">{ratedCount}/{pillar.items.length} rated</span>
-        <span className="pillar-chevron">▾</span>
+        <span className="pillar-chevron">v</span>
       </div>
       {!collapsed && (
         <div className="pillar-body">
