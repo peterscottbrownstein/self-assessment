@@ -36,6 +36,7 @@ function normalizeLibrary(candidateLibrary) {
         title: record.title,
         template: record.template,
         source: typeof record.source === 'string' ? record.source : 'custom',
+        archivedAt: typeof record.archivedAt === 'string' ? record.archivedAt : null,
         createdAt: typeof record.createdAt === 'string' ? record.createdAt : new Date().toISOString(),
         updatedAt: typeof record.updatedAt === 'string' ? record.updatedAt : new Date().toISOString(),
         savedAt: typeof record.savedAt === 'string' ? record.savedAt : null,
@@ -225,6 +226,51 @@ export function useAssessment() {
     });
   }, [scheduleAutoSave]);
 
+  const archiveAssessment = useCallback((assessmentId) => {
+    setLibrary(currentLibrary => {
+      const target = currentLibrary.assessments.find(assessment => assessment.id === assessmentId);
+      if (!target) return currentLibrary;
+      if (target.source === 'builtin') {
+        throw new Error('The built-in assessment cannot be archived.');
+      }
+
+      const archivedAt = new Date().toISOString();
+      const nextAssessments = currentLibrary.assessments.map(assessment => (
+        assessment.id === assessmentId
+          ? { ...assessment, archivedAt, updatedAt: archivedAt }
+          : assessment
+      ));
+
+      const nextCurrentId = currentLibrary.currentAssessmentId === assessmentId
+        ? (nextAssessments.find(assessment => !assessment.archivedAt)?.id ?? nextAssessments[0].id)
+        : currentLibrary.currentAssessmentId;
+
+      const nextLibrary = {
+        assessments: nextAssessments,
+        currentAssessmentId: nextCurrentId,
+      };
+
+      scheduleAutoSave(nextLibrary);
+      return nextLibrary;
+    });
+  }, [scheduleAutoSave]);
+
+  const restoreAssessment = useCallback((assessmentId) => {
+    setLibrary(currentLibrary => {
+      const nextLibrary = {
+        ...currentLibrary,
+        assessments: currentLibrary.assessments.map(assessment => (
+          assessment.id === assessmentId
+            ? { ...assessment, archivedAt: null, updatedAt: new Date().toISOString() }
+            : assessment
+        )),
+      };
+
+      scheduleAutoSave(nextLibrary);
+      return nextLibrary;
+    });
+  }, [scheduleAutoSave]);
+
   const setRating = useCallback((itemId, rating) => {
     updateCurrentAssessment(assessment => {
       const current = assessment.state[itemId]?.rating;
@@ -324,6 +370,8 @@ export function useAssessment() {
     openAssessment,
     createAssessment,
     renameAssessment,
+    archiveAssessment,
+    restoreAssessment,
     setRating,
     setNote,
     setPillarSummary,

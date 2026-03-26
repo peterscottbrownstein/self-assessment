@@ -10,13 +10,62 @@ function formatDate(iso) {
   });
 }
 
+function AssessmentCard({
+  assessment,
+  isCurrent,
+  onOpen,
+  onRename,
+  onArchive,
+  onRestore,
+  archived = false,
+}) {
+  const responsibilityCount = assessment.template.pillars.reduce(
+    (sum, pillar) => sum + pillar.items.length,
+    0
+  );
+
+  return (
+    <article className={`library-card ${isCurrent ? 'is-current' : ''} ${archived ? 'is-archived' : ''}`.trim()}>
+      <div className="library-card-meta">
+        <span className="library-card-source">{assessment.source === 'builtin' ? 'Built in' : 'CSV import'}</span>
+        <span>{assessment.template.pillars.length} sections</span>
+        <span>{responsibilityCount} responsibilities</span>
+        {archived && <span>Archived</span>}
+      </div>
+      <h3>{assessment.title}</h3>
+      <p className="library-card-subtitle">
+        {assessment.template.subtitle || 'Custom assessment'}
+      </p>
+      <p className="library-card-date">Last saved: {formatDate(assessment.savedAt)}</p>
+      <div className="library-card-actions">
+        <button className="btn btn-save" onClick={() => onOpen(assessment.id)}>
+          {archived ? 'Open' : 'Continue'}
+        </button>
+        <button className="btn btn-import" onClick={() => onRename(assessment.id)}>Rename</button>
+        {archived ? (
+          <button className="btn btn-data" onClick={() => onRestore(assessment.id)}>Restore</button>
+        ) : (
+          assessment.source !== 'builtin' && (
+            <button className="btn btn-reset" onClick={() => onArchive(assessment.id)}>Archive</button>
+          )
+        )}
+      </div>
+    </article>
+  );
+}
+
 export function AssessmentLibrary({
   assessments,
+  archivedAssessments,
   currentAssessmentId,
   onOpen,
   onRename,
+  onArchive,
+  onRestore,
   onCreate,
   isUploading = false,
+  showArchived = false,
+  onToggleArchived,
 }) {
   return (
     <main className="main">
@@ -57,36 +106,52 @@ Delivery,Builds delivery visibility,3,"Improved release clarity this year","Need
         </div>
       </details>
 
-      <section className="library-grid">
-        {assessments.map(assessment => {
-          const responsibilityCount = assessment.template.pillars.reduce(
-            (sum, pillar) => sum + pillar.items.length,
-            0
-          );
-
-          return (
-            <article
+      <section className="library-section">
+        <div className="library-section-header">
+          <h3>Active Assessments</h3>
+          <span>{assessments.length}</span>
+        </div>
+        <div className="library-grid">
+          {assessments.map(assessment => (
+            <AssessmentCard
               key={assessment.id}
-              className={`library-card ${assessment.id === currentAssessmentId ? 'is-current' : ''}`}
-            >
-              <div className="library-card-meta">
-                <span className="library-card-source">{assessment.source === 'builtin' ? 'Built in' : 'CSV import'}</span>
-                <span>{assessment.template.pillars.length} sections</span>
-                <span>{responsibilityCount} responsibilities</span>
-              </div>
-              <h3>{assessment.title}</h3>
-              <p className="library-card-subtitle">
-                {assessment.template.subtitle || 'Custom assessment'}
-              </p>
-              <p className="library-card-date">Last saved: {formatDate(assessment.savedAt)}</p>
-              <div className="library-card-actions">
-                <button className="btn btn-save" onClick={() => onOpen(assessment.id)}>Open</button>
-                <button className="btn btn-import" onClick={() => onRename(assessment.id)}>Rename</button>
-              </div>
-            </article>
-          );
-        })}
+              assessment={assessment}
+              isCurrent={assessment.id === currentAssessmentId}
+              onOpen={onOpen}
+              onRename={onRename}
+              onArchive={onArchive}
+              onRestore={onRestore}
+            />
+          ))}
+        </div>
       </section>
+
+      {archivedAssessments.length > 0 && (
+        <section className="library-section">
+          <div className="library-section-header">
+            <h3>Archived Assessments</h3>
+            <button className="library-toggle" onClick={onToggleArchived}>
+              {showArchived ? 'Hide archived' : `Show archived (${archivedAssessments.length})`}
+            </button>
+          </div>
+          {showArchived && (
+            <div className="library-grid">
+              {archivedAssessments.map(assessment => (
+                <AssessmentCard
+                  key={assessment.id}
+                  assessment={assessment}
+                  isCurrent={assessment.id === currentAssessmentId}
+                  onOpen={onOpen}
+                  onRename={onRename}
+                  onArchive={onArchive}
+                  onRestore={onRestore}
+                  archived
+                />
+              ))}
+            </div>
+          )}
+        </section>
+      )}
     </main>
   );
 }

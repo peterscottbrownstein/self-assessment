@@ -30,6 +30,7 @@ A self-assessment web app for a Director of Engineering role at Marcura/Navigato
 - CSV import can optionally restore `rating`, `note`, and `pillar_reflection` data when those columns are present
 - The assessment editor header now uses a single Export dropdown for JSON backup, Markdown, and round-trip CSV export
 - The assessment library keeps the CSV format guide collapsed by default and uses in-app loading overlays plus success/error toasts for CSV and JSON imports
+- Custom assessments can now be archived and restored; archived items are hidden from the main active list and shown in a separate revealable section in the library
 - Shared VS Code debugging is configured in `.vscode/launch.json` and `.vscode/tasks.json` so `F5` can start Vite and open the app in Chrome
 
 ## Running the React App
@@ -67,7 +68,7 @@ components/
 
 **Data model:** Each item in `PILLARS` has a stable `id` (format: `p1_01`), `text`, and `prev` (pre-populated rating from a prior 1-3 scale: Developing -> 2, Proficient -> 4, Strong -> 5).
 
-**State:** The app now stores a local library of assessments under `doe-self-assessment-library`, with one active assessment open at a time. Each assessment contains a reusable `template`, a flat `state` object keyed by item `id` with values `{ rating: number|null, note: string }`, and `summary.pillars[pillarId]` for pillar reflections.
+**State:** The app now stores a local library of assessments under `doe-self-assessment-library`, with one active assessment open at a time. Each assessment contains a reusable `template`, a flat `state` object keyed by item `id` with values `{ rating: number|null, note: string }`, `summary.pillars[pillarId]` for pillar reflections, and an optional `archivedAt` timestamp for soft-archiving.
 
 **Rating scale:** 1 = On radar for growth, 2 = Developing, 3 = Iterating, 4 = Proficient, 5 = Strong. Full definitions are stored with the shared rating metadata and exposed through the expandable legend.
 

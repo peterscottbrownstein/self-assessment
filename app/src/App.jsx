@@ -23,6 +23,7 @@ export default function App() {
   const [view, setView] = useState('library');
   const [busyMessage, setBusyMessage] = useState('');
   const [toasts, setToasts] = useState([]);
+  const [showArchived, setShowArchived] = useState(false);
   const {
     assessments,
     currentAssessment,
@@ -30,6 +31,8 @@ export default function App() {
     openAssessment,
     createAssessment,
     renameAssessment,
+    archiveAssessment,
+    restoreAssessment,
     setRating,
     setNote,
     setPillarSummary,
@@ -49,6 +52,14 @@ export default function App() {
   const summaryItems = useMemo(
     () => flattenItems(currentAssessment.template),
     [currentAssessment.template]
+  );
+  const activeAssessments = useMemo(
+    () => assessments.filter(assessment => !assessment.archivedAt),
+    [assessments]
+  );
+  const archivedAssessments = useMemo(
+    () => assessments.filter(assessment => assessment.archivedAt),
+    [assessments]
   );
   const isBusy = busyMessage.length > 0;
 
@@ -95,6 +106,31 @@ export default function App() {
     } catch (error) {
       showToast(error instanceof Error ? error.message : 'Unable to rename assessment.', 'error');
     }
+  }
+
+  function handleArchiveAssessment(assessmentId = currentAssessment.id) {
+    const assessment = assessments.find(entry => entry.id === assessmentId) ?? currentAssessment;
+    if (!confirm(`Archive "${assessment.title}"? You can restore it later from the library.`)) {
+      return;
+    }
+
+    try {
+      archiveAssessment(assessmentId);
+      if (assessmentId === currentAssessment.id) {
+        setView('library');
+      }
+      showToast(`Archived "${assessment.title}".`);
+    } catch (error) {
+      showToast(error instanceof Error ? error.message : 'Unable to archive assessment.', 'error');
+    }
+  }
+
+  function handleRestoreAssessment(assessmentId) {
+    const assessment = assessments.find(entry => entry.id === assessmentId);
+    if (!assessment) return;
+
+    restoreAssessment(assessmentId);
+    showToast(`Restored "${assessment.title}".`);
   }
 
   function handleReset() {
@@ -158,7 +194,7 @@ export default function App() {
       <>
         <Header
           title="Assessment Library"
-          subtitle={`${assessments.length} saved assessments`}
+          subtitle={`${activeAssessments.length} active assessments${archivedAssessments.length ? ` | ${archivedAssessments.length} archived` : ''}`}
           actions={(
             <button className="btn btn-data" onClick={() => csvImportRef.current?.click()} disabled={isBusy}>
               {isBusy ? 'Uploading...' : 'New from CSV'}
@@ -173,12 +209,17 @@ export default function App() {
           onChange={handleCreateFromCsv}
         />
         <AssessmentLibrary
-          assessments={assessments}
+          assessments={activeAssessments}
+          archivedAssessments={archivedAssessments}
           currentAssessmentId={currentAssessment.id}
           onOpen={handleOpenAssessment}
           onRename={handleRenameAssessment}
+          onArchive={handleArchiveAssessment}
+          onRestore={handleRestoreAssessment}
           onCreate={() => csvImportRef.current?.click()}
           isUploading={isBusy}
+          showArchived={showArchived}
+          onToggleArchived={() => setShowArchived(current => !current)}
         />
         {isBusy && (
           <div className="app-overlay" role="status" aria-live="polite">
@@ -205,6 +246,11 @@ export default function App() {
           <>
             <button className="btn btn-save" onClick={saveNow}>Save</button>
             <button className="btn btn-import" onClick={() => handleRenameAssessment()}>Rename</button>
+            {currentAssessment.source !== 'builtin' && (
+              <button className="btn btn-reset" onClick={() => handleArchiveAssessment()}>
+                Archive
+              </button>
+            )}
             <button className="btn btn-import" onClick={() => jsonImportRef.current?.click()}>Import Data</button>
             <details className="export-menu">
               <summary className="btn btn-export">Export</summary>
