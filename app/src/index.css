@@ -209,6 +209,10 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
   gap: 12px;
   min-width: 280px;
 }
+.library-create > .btn,
+.library-create > .template-menu {
+  width: 100%;
+}
 .library-upload-title {
   display: grid;
   gap: 6px;
@@ -254,10 +258,22 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
   align-items: center;
   justify-content: space-between;
   gap: 10px;
+  width: 100%;
+}
+.template-menu-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+.template-menu-icon {
+  width: 14px;
+  height: 14px;
+  flex-shrink: 0;
 }
 .template-menu-caret {
-  font-size: 0.72rem;
-  line-height: 1;
+  width: 12px;
+  height: 12px;
+  flex-shrink: 0;
   transition: transform 0.16s ease;
 }
 .template-menu[open] .template-menu-caret {

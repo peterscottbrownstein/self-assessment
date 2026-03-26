@@ -12,7 +12,9 @@ import { ToastStack } from './components/ToastStack';
 
 function waitForNextPaint() {
   return new Promise(resolve => {
-    requestAnimationFrame(() => resolve());
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => resolve());
+    });
   });
 }
 

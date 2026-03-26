@@ -10,6 +10,46 @@ function formatDate(iso) {
   });
 }
 
+function DownloadIcon() {
+  return (
+    <svg
+      className="template-menu-icon"
+      viewBox="0 0 16 16"
+      aria-hidden="true"
+      focusable="false"
+    >
+      <path
+        d="M8 2.5v6.2m0 0 2.4-2.4M8 8.7 5.6 6.3M3 11.5h10"
+        fill="none"
+        stroke="currentColor"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth="1.5"
+      />
+    </svg>
+  );
+}
+
+function ChevronIcon() {
+  return (
+    <svg
+      className="template-menu-caret"
+      viewBox="0 0 16 16"
+      aria-hidden="true"
+      focusable="false"
+    >
+      <path
+        d="m4.5 6.5 3.5 3.5 3.5-3.5"
+        fill="none"
+        stroke="currentColor"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth="1.75"
+      />
+    </svg>
+  );
+}
+
 function AssessmentCard({
   assessment,
   isCurrent,
@@ -97,8 +137,11 @@ export function AssessmentLibrary({
           </button>
           <details className="template-menu">
             <summary className="btn btn-import template-menu-trigger">
-              Download CSV Template
-              <span className="template-menu-caret" aria-hidden="true">v</span>
+              <span className="template-menu-label">
+                <DownloadIcon />
+                Download CSV Template
+              </span>
+              <ChevronIcon />
             </summary>
             <div className="template-menu-list">
               <button
