@@ -18,21 +18,26 @@ export function Pillar({
 
   return (
     <div className={`pillar ${collapsed ? 'collapsed' : ''}`}>
-      <div className="pillar-header" onClick={() => setCollapsed(c => !c)}>
-        <h2>{pillar.title}</h2>
-        <span className="pillar-meta">
-          {ratedCount}/{pillar.items.length} rated | {pillar.items.length} responsibilities
-        </span>
-        <span className="pillar-chevron">v</span>
-      </div>
-      {!collapsed && (
-        <div className="pillar-body">
+      <div className="pillar-sticky">
+        <div className="pillar-header" onClick={() => setCollapsed(c => !c)}>
+          <h2>{pillar.title}</h2>
+          <span className="pillar-meta">
+            {ratedCount}/{pillar.items.length} rated | {pillar.items.length} responsibilities
+          </span>
+          <span className="pillar-chevron">v</span>
+        </div>
+        {!collapsed && (
           <SummaryBar
             assessmentState={assessmentState}
             items={pillar.items}
-            title="Pillar Summary"
+            title="Pillar Rating Summary"
             className="summary-bar-pillar"
           />
+        )}
+      </div>
+
+      {!collapsed && (
+        <div className="pillar-body">
           {pillar.items.map((item, index) => (
             <Item
               key={item.id}

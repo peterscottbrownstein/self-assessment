@@ -22,6 +22,7 @@ A self-assessment web app for a Director of Engineering role at Marcura/Navigato
 - Responsibilities are numbered globally across the full assessment instead of restarting within each pillar
 - Each pillar now also shows its own rating summary bar in addition to the global summary at the top
 - Rating definitions are stored centrally and shown through a compact expandable scale legend
+- Each pillar's header plus `Pillar Rating Summary` now stick under the main header while scrolling; the textarea section is labeled `Pillar Reflection`
 - Shared VS Code debugging is configured in `.vscode/launch.json` and `.vscode/tasks.json` so `F5` can start Vite and open the app in Chrome
 
 ## Running the React App
@@ -45,10 +46,10 @@ data/pillars.js        - PILLARS array plus rating labels/definitions (all asses
 hooks/useAssessment.js - ratings, notes, per-pillar summaries, localStorage, auto-save, and import validation/normalization
 utils/export.js        - Markdown export plus versioned JSON backup export
 components/
-  Header.jsx           - sticky header with save/export/import/reset actions
+  Header.jsx           - sticky header with save/export/import/reset actions and measured offset for sticky pillar sections
   SummaryBar.jsx       - reusable chip counts + color-coded progress bar for the global and per-pillar summaries
   ScaleLegend.jsx      - compact rating scale reference card with expandable definitions
-  Pillar.jsx           - collapsible pillar section plus per-pillar summary area
+  Pillar.jsx           - collapsible pillar section with a sticky pillar header + rating summary block
   PillarSummary.jsx    - textarea UI for the written reflection under each pillar
   Item.jsx             - individual competency row with rating buttons, notes, and global responsibility numbering
 ```
@@ -65,4 +66,4 @@ components/
 
 **Numbering:** Responsibilities are displayed and exported with one continuous number across all pillars so progress can be read as `X of total` anywhere in the assessment.
 
-**Summaries:** The top of the page shows the rating mix for the whole assessment, and each pillar now includes its own local summary bar for that pillar's ratings.
+**Summaries:** The top of the page shows the rating mix for the whole assessment, and each pillar includes its own local `Pillar Rating Summary`. The written section beneath the responsibilities is labeled `Pillar Reflection`.

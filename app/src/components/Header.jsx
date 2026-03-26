@@ -1,3 +1,5 @@
+import { useEffect, useRef } from 'react';
+
 function formatTime(iso) {
   if (!iso) return 'Not yet saved';
   return (
@@ -20,8 +22,30 @@ export function Header({
   onExportMarkdown,
   onReset,
 }) {
+  const headerRef = useRef(null);
+
+  useEffect(() => {
+    const header = headerRef.current;
+    if (!header) return undefined;
+
+    const updateHeight = () => {
+      document.documentElement.style.setProperty('--site-header-height', `${header.offsetHeight}px`);
+    };
+
+    updateHeight();
+
+    const observer = new ResizeObserver(updateHeight);
+    observer.observe(header);
+    window.addEventListener('resize', updateHeight);
+
+    return () => {
+      observer.disconnect();
+      window.removeEventListener('resize', updateHeight);
+    };
+  }, []);
+
   return (
-    <header className="site-header">
+    <header ref={headerRef} className="site-header">
       <div>
         <h1>Director of Engineering - Self Assessment</h1>
         <p>

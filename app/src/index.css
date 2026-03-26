@@ -10,6 +10,7 @@
   --text: #1a2332;
   --muted: #6b7a90;
   --pillar-bg: #1a2332;
+  --site-header-height: 96px;
 }
 
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -60,6 +61,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
   border-bottom: 1px solid var(--border);
   padding: 14px 20px;
   background: #fbfcfe;
+  box-shadow: 0 8px 20px rgba(26, 35, 50, 0.08);
 }
 .summary-bar-pillar h2 {
   min-width: 110px;
@@ -93,6 +95,11 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
 
 /* PILLAR */
 .pillar { margin-bottom: 36px; }
+.pillar-sticky {
+  position: sticky;
+  top: var(--site-header-height);
+  z-index: 40;
+}
 .pillar-header {
   background: var(--pillar-bg); color: white;
   padding: 14px 20px; border-radius: 8px 8px 0 0;
@@ -219,25 +226,25 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
 .ls-5 { background: var(--r5); }
 .legend-sep { color: var(--border); font-weight: 300; }
 
-/* PILLAR SUMMARY */
-.pillar-summary {
+/* PILLAR REFLECTION */
+.pillar-reflection {
   background: linear-gradient(180deg, #fbfcfe 0%, #f6f8fb 100%);
   border-top: 1px solid var(--border);
   padding: 22px 20px 24px;
 }
-.pillar-summary-header h3 {
+.pillar-reflection-header h3 {
   font-size: 0.95rem;
   font-weight: 700;
   letter-spacing: 0.04em;
   text-transform: uppercase;
 }
-.pillar-summary-header p {
+.pillar-reflection-header p {
   margin-top: 8px;
   color: var(--muted);
   font-size: 0.88rem;
   max-width: 720px;
 }
-.pillar-summary textarea {
+.pillar-reflection textarea {
   width: 100%;
   min-height: 170px;
   padding: 14px 16px;
@@ -251,7 +258,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
   transition: border-color 0.12s, background 0.12s, box-shadow 0.12s;
   margin-top: 18px;
 }
-.pillar-summary textarea:focus {
+.pillar-reflection textarea:focus {
   outline: none;
   border-color: #4a90d9;
   background: white;
@@ -264,7 +271,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
     flex-direction: column;
   }
 
-  .pillar-summary textarea {
+  .pillar-reflection textarea {
     min-height: 150px;
   }
 }

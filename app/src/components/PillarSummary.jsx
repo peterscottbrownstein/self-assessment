@@ -1,8 +1,8 @@
 export function PillarSummary({ pillarTitle, value, onChange }) {
   return (
-    <div className="pillar-summary">
-      <div className="pillar-summary-header">
-        <h3>Pillar Summary</h3>
+    <div className="pillar-reflection">
+      <div className="pillar-reflection-header">
+        <h3>Pillar Reflection</h3>
         <p>
           Capture what you are seeing in {pillarTitle}, why you rated it this way,
           and what you want to strengthen next.
