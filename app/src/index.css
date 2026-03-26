@@ -66,6 +66,26 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
 .summary-bar-pillar h2 {
   min-width: 110px;
 }
+.summary-average {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  padding: 4px 10px;
+  border-radius: 10px;
+  background: #f5f7fb;
+}
+.summary-average-label {
+  font-size: 0.74rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.summary-average-value {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--pillar-bg);
+}
 .summary-chips { display: flex; gap: 10px; flex-wrap: wrap; }
 .chip { display: flex; align-items: center; gap: 6px; padding: 4px 10px; border-radius: 20px; font-size: 0.78rem; font-weight: 600; }
 .chip-dot { width: 8px; height: 8px; border-radius: 50%; }

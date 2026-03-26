@@ -20,10 +20,20 @@ export function SummaryBar({
   const summaryItems = items ?? PILLARS.flatMap(pillar => pillar.items);
   const counts = buildCounts(summaryItems, assessmentState);
   const total = summaryItems.length;
+  const ratedCount = [1, 2, 3, 4, 5].reduce((sum, rating) => sum + counts[rating], 0);
+  const weightedScore = [1, 2, 3, 4, 5].reduce((sum, rating) => sum + (rating * counts[rating]), 0);
+  const averageScore = ratedCount > 0 ? (weightedScore / ratedCount).toFixed(2) : null;
+  const showAverage = !items;
 
   return (
     <div className={`summary-bar ${className}`.trim()}>
       <h2>{title}</h2>
+      {showAverage && averageScore && (
+        <div className="summary-average">
+          <span className="summary-average-label">Average</span>
+          <span className="summary-average-value">{averageScore}/5</span>
+        </div>
+      )}
       <div className="summary-chips">
         {[1, 2, 3, 4, 5].map(r =>
           counts[r] > 0 ? (
