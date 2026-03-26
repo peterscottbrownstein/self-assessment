@@ -58,6 +58,8 @@ export function AssessmentLibrary({
   assessments,
   archivedAssessments,
   currentAssessmentId,
+  uploadTitle,
+  onUploadTitleChange,
   onOpen,
   onRename,
   onArchive,
@@ -78,9 +80,21 @@ export function AssessmentLibrary({
             becomes its own reusable assessment with saved ratings, notes, and reflections.
           </p>
         </div>
-        <button className="btn btn-data" onClick={onCreate} disabled={isUploading}>
-          {isUploading ? 'Uploading...' : 'New from CSV'}
-        </button>
+        <div className="library-create">
+          <label className="library-upload-title">
+            <span>Assessment title (optional)</span>
+            <input
+              type="text"
+              value={uploadTitle}
+              onChange={event => onUploadTitleChange(event.target.value)}
+              placeholder="Self-Assessment 03/26/2026"
+              disabled={isUploading}
+            />
+          </label>
+          <button className="btn btn-data" onClick={onCreate} disabled={isUploading}>
+            {isUploading ? 'Uploading...' : 'New from CSV'}
+          </button>
+        </div>
       </section>
 
       <details className="csv-help">
@@ -91,8 +105,9 @@ export function AssessmentLibrary({
         <div className="csv-help-body">
           <p>
             Use either a single responsibility column or a category plus responsibility format.
-            Header names like <code>responsibility</code>, <code>item</code>, <code>category</code>,
-            and <code>pillar</code> are recognized automatically. Optional columns like
+            Add an optional assessment title in the field above when you upload. Header names like
+            <code>responsibility</code>, <code>item</code>, <code>category</code>, and <code>pillar</code>
+            are recognized automatically. Optional columns like
             <code> rating</code>, <code>note</code>, and <code>pillar_reflection</code> will also
             be imported when present.
           </p>

@@ -25,19 +25,11 @@ function slugify(text) {
     .replace(/^-+|-+$/g, '');
 }
 
-function stripExtension(filename) {
-  return filename.replace(/\.[^.]+$/, '');
-}
-
-function humanizeFilename(filename) {
-  const base = stripExtension(filename).trim();
-  if (!base) return 'Uploaded Assessment';
-
-  return base
-    .replace(/[_-]+/g, ' ')
-    .replace(/\s+/g, ' ')
-    .trim()
-    .replace(/\b\w/g, letter => letter.toUpperCase());
+export function buildDefaultAssessmentTitle(date = new Date()) {
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  const year = date.getFullYear();
+  return `Self-Assessment ${month}/${day}/${year}`;
 }
 
 export function parseCsv(text) {
@@ -182,13 +174,14 @@ function buildRecordFromRow(row, columns, fallbackTitle) {
   };
 }
 
-export function buildAssessmentFromCsv(text, filename = 'uploaded-assessment.csv') {
+export function buildAssessmentFromCsv(text, filename = 'uploaded-assessment.csv', options = {}) {
   const rows = parseCsv(text);
   if (rows.length === 0) {
     throw new Error('That CSV is empty.');
   }
 
-  const defaultTitle = humanizeFilename(filename);
+  const uploadTitle = typeof options.title === 'string' ? options.title.trim() : '';
+  const defaultTitle = uploadTitle || buildDefaultAssessmentTitle();
   const hasHeader = detectHeader(rows[0]);
   const columns = hasHeader
     ? buildColumnMap(rows[0])
@@ -210,7 +203,7 @@ export function buildAssessmentFromCsv(text, filename = 'uploaded-assessment.csv
     throw new Error('The CSV did not contain any responsibilities to import.');
   }
 
-  const title = records.find(record => record.title)?.title || defaultTitle;
+  const title = uploadTitle || records.find(record => record.title)?.title || defaultTitle;
   const hasCategories = records.some(record => record.category);
   const pillarMap = new Map();
 

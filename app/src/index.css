@@ -204,6 +204,36 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
   max-width: 620px;
   color: var(--muted);
 }
+.library-create {
+  display: grid;
+  gap: 12px;
+  min-width: 280px;
+}
+.library-upload-title {
+  display: grid;
+  gap: 6px;
+}
+.library-upload-title span {
+  font-size: 0.74rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.library-upload-title input {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1.5px solid var(--border);
+  border-radius: 10px;
+  font: inherit;
+  color: var(--text);
+  background: rgba(255, 255, 255, 0.96);
+}
+.library-upload-title input:focus {
+  outline: none;
+  border-color: #4a90d9;
+  box-shadow: 0 0 0 3px rgba(74, 144, 217, 0.12);
+}
 .csv-help {
   margin-top: 22px;
   background: white;
@@ -602,6 +632,11 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
     align-items: flex-start;
     flex-direction: column;
     padding: 24px 22px;
+  }
+
+  .library-create {
+    width: 100%;
+    min-width: 0;
   }
 
   .library-grid {

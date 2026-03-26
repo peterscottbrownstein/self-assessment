@@ -150,7 +150,7 @@ export function exportMarkdown(assessment) {
 export function exportCsv(assessment) {
   const today = new Date().toISOString().split('T')[0];
   const slug = buildTemplateSlug(assessment.title);
-  const rows = ['title,category,responsibility,rating,note,pillar_reflection'];
+  const rows = ['category,responsibility,rating,note,pillar_reflection'];
 
   assessment.template.pillars.forEach(pillar => {
     pillar.items.forEach(item => {
@@ -158,7 +158,6 @@ export function exportCsv(assessment) {
       const pillarReflection = assessment.summary.pillars?.[pillar.id] ?? '';
 
       rows.push([
-        escapeCsvValue(assessment.title),
         escapeCsvValue(pillar.title),
         escapeCsvValue(item.text),
         escapeCsvValue(itemState.rating ?? ''),

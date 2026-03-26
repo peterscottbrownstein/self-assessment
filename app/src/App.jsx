@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useAssessment } from './hooks/useAssessment';
 import { exportAssessmentData, exportCsv, exportMarkdown } from './utils/export';
-import { buildAssessmentFromCsv } from './utils/csv';
+import { buildAssessmentFromCsv, buildDefaultAssessmentTitle } from './utils/csv';
 import { buildPillarStartIndexes, flattenItems, getTotalResponsibilities } from './utils/assessmentModel';
 import { Header } from './components/Header';
 import { SummaryBar } from './components/SummaryBar';
@@ -24,6 +24,7 @@ export default function App() {
   const [busyMessage, setBusyMessage] = useState('');
   const [toasts, setToasts] = useState([]);
   const [showArchived, setShowArchived] = useState(false);
+  const [uploadTitle, setUploadTitle] = useState('');
   const {
     assessments,
     currentAssessment,
@@ -167,7 +168,10 @@ export default function App() {
     try {
       setBusyMessage(`Creating assessment from ${file.name}...`);
       await waitForNextPaint();
-      const importedAssessment = buildAssessmentFromCsv(await file.text(), file.name);
+      const nextTitle = uploadTitle.trim() || buildDefaultAssessmentTitle();
+      const importedAssessment = buildAssessmentFromCsv(await file.text(), file.name, {
+        title: nextTitle,
+      });
       createAssessment({
         title: importedAssessment.title,
         template: importedAssessment.template,
@@ -175,8 +179,9 @@ export default function App() {
         summary: importedAssessment.summary,
         source: 'csv',
       });
+      setUploadTitle('');
       setView('assessment');
-      showToast(`Created assessment from ${file.name}.`);
+      showToast(`Created "${importedAssessment.title}".`);
     } catch (error) {
       showToast(error instanceof Error ? error.message : 'Unable to create an assessment from that CSV.', 'error');
     } finally {
@@ -212,6 +217,8 @@ export default function App() {
           assessments={activeAssessments}
           archivedAssessments={archivedAssessments}
           currentAssessmentId={currentAssessment.id}
+          uploadTitle={uploadTitle}
+          onUploadTitleChange={setUploadTitle}
           onOpen={handleOpenAssessment}
           onRename={handleRenameAssessment}
           onArchive={handleArchiveAssessment}

@@ -27,6 +27,7 @@ A self-assessment web app for a Director of Engineering role at Marcura/Navigato
 - The Markdown export now includes a top summary, rating definitions in the scale table, per-pillar rating summaries, `####` responsibility headings, and `Pillar Reflection` labeling
 - The React app now supports a local assessment library with multiple saved assessments instead of a single hard-coded record
 - New assessments can be created from CSV uploads, either as a plain responsibility list or grouped by category/pillar
+- The library screen now includes an optional upload title field; if left blank, new CSV assessments default to `Self-Assessment MM/DD/YYYY`
 - CSV import can optionally restore `rating`, `note`, and `pillar_reflection` data when those columns are present
 - The assessment editor header now uses a single Export dropdown for JSON backup, Markdown, and round-trip CSV export
 - The assessment library keeps the CSV format guide collapsed by default and uses in-app loading overlays plus success/error toasts for CSV and JSON imports
@@ -53,7 +54,7 @@ Update this file before committing when a change adds context another assistant 
 data/pillars.js        - PILLARS array plus rating labels/definitions (all assessment content lives here)
 hooks/useAssessment.js - assessment library storage, current assessment editing, localStorage migration, auto-save, and import validation/normalization
 utils/assessmentModel.js - reusable assessment template/state/summary helpers for built-in and uploaded assessments
-utils/csv.js           - CSV parsing plus creation of new assessments from plain or categorized responsibility lists, with optional rating/note/reflection restoration
+utils/csv.js           - CSV parsing plus creation of new assessments from plain or categorized responsibility lists, with optional rating/note/reflection restoration and optional UI-provided title
 utils/export.js        - JSON backup, Markdown export, and round-trip CSV export for the current assessment
 components/
   Header.jsx           - sticky header with flexible actions and measured offset for sticky pillar sections
@@ -74,7 +75,7 @@ components/
 
 **Persistence:** Auto-saves to localStorage key `doe-self-assessment-library` about 1.5s after any change. `saveNow` triggers an immediate save. Legacy single-assessment localStorage is migrated into the new library shape on load.
 
-**Backup/import:** Structured assessment backups are exported as versioned JSON and can be imported back into the currently open assessment. Markdown export remains separate and includes the top summary, rating definitions, per-pillar rating summaries, and any `Pillar Reflection` content under the corresponding pillar sections. CSV export now produces a round-trip import format with `title`, `category`, `responsibility`, and optional `rating`, `note`, and `pillar_reflection` values.
+**Backup/import:** Structured assessment backups are exported as versioned JSON and can be imported back into the currently open assessment. Markdown export remains separate and includes the top summary, rating definitions, per-pillar rating summaries, and any `Pillar Reflection` content under the corresponding pillar sections. CSV export now produces a round-trip import format with `category`, `responsibility`, and optional `rating`, `note`, and `pillar_reflection` values. Assessment title can be supplied from the library upload UI instead of repeating it on every CSV row.
 
 **Numbering:** Responsibilities are displayed and exported with one continuous number across all pillars so progress can be read as `X of total` anywhere in the assessment.
 
