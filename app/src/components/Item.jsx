@@ -25,7 +25,8 @@ export function Item({ item, itemState, position, totalResponsibilities, onRate,
               className={`rating-btn ${rating === r ? `active-${r}` : ''}`}
               onClick={() => onRate(item.id, r)}
             >
-              {r} - {RATINGS[r]}
+              <span className="rating-num">{r}</span>
+              <span className="rating-label"> – {RATINGS[r]}</span>
             </button>
           ))}
         </div>
