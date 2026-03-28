@@ -23,9 +23,9 @@ function waitForNextPaint() {
 function AssessmentSync({ assessments, currentAssessmentId, openAssessment, children }) {
   const { id } = useParams();
   const navigate = useNavigate();
+  const exists = assessments.some(a => a.id === id);
 
   useEffect(() => {
-    const exists = assessments.some(a => a.id === id);
     if (!exists) {
       navigate('/', { replace: true });
       return;
@@ -33,8 +33,9 @@ function AssessmentSync({ assessments, currentAssessmentId, openAssessment, chil
     if (id !== currentAssessmentId) {
       openAssessment(id);
     }
-  }, [id, assessments, currentAssessmentId, openAssessment, navigate]);
+  }, [id, exists, currentAssessmentId, openAssessment, navigate]);
 
+  if (!exists) return null;
   return children;
 }
 
@@ -65,16 +66,16 @@ export default function App() {
   } = useAssessment();
 
   const totalResponsibilities = useMemo(
-    () => getTotalResponsibilities(currentAssessment.template),
-    [currentAssessment.template]
+    () => currentAssessment ? getTotalResponsibilities(currentAssessment.template) : 0,
+    [currentAssessment]
   );
   const pillarStartIndexes = useMemo(
-    () => buildPillarStartIndexes(currentAssessment.template),
-    [currentAssessment.template]
+    () => currentAssessment ? buildPillarStartIndexes(currentAssessment.template) : {},
+    [currentAssessment]
   );
   const summaryItems = useMemo(
-    () => flattenItems(currentAssessment.template),
-    [currentAssessment.template]
+    () => currentAssessment ? flattenItems(currentAssessment.template) : [],
+    [currentAssessment]
   );
   const activeAssessments = useMemo(
     () => assessments.filter(assessment => !assessment.archivedAt),

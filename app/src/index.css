@@ -448,6 +448,24 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
   gap: 10px;
   flex-wrap: wrap;
 }
+.library-empty {
+  margin-top: 24px;
+  padding: 36px 24px;
+  text-align: center;
+  border: 2px dashed var(--border);
+  border-radius: 14px;
+  background: white;
+}
+.library-empty-heading {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--text);
+  margin-bottom: 8px;
+}
+.library-empty-body {
+  color: var(--muted);
+  font-size: 0.88rem;
+}
 
 /* FEEDBACK */
 .app-overlay {
