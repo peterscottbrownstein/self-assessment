@@ -53,10 +53,10 @@ export function Header({
         <p>
           {subtitle}
           {savedAt ? ` | Last saved ${formatTime(savedAt)}` : ''}
+          {savedAt != null && <span className={`save-indicator ${justSaved ? 'show' : ''}`}> · Saved</span>}
         </p>
       </div>
       <div className="header-actions">
-        {savedAt != null && <span className={`save-indicator ${justSaved ? 'show' : ''}`}>Saved</span>}
         {actions}
       </div>
     </header>
