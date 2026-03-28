@@ -205,25 +205,35 @@ Delivery,Builds delivery visibility,3,"Improved release clarity this year","Need
         </div>
       </details>
 
-      <section className="library-section">
-        <div className="library-section-header">
-          <h3>Active Assessments</h3>
-          <span>{assessments.length}</span>
-        </div>
-        <div className="library-grid">
-          {assessments.map(assessment => (
-            <AssessmentCard
-              key={assessment.id}
-              assessment={assessment}
-              isCurrent={assessment.id === currentAssessmentId}
-              onOpen={onOpen}
-              onRename={onRename}
-              onArchive={onArchive}
-              onRestore={onRestore}
-            />
-          ))}
-        </div>
-      </section>
+      {assessments.length === 0 ? (
+        <section className="library-empty">
+          <p className="library-empty-heading">No active assessments</p>
+          <p className="library-empty-body">
+            Upload a CSV above to create your first assessment.
+            {archivedAssessments.length > 0 && ' You can also restore one from the archived list below.'}
+          </p>
+        </section>
+      ) : (
+        <section className="library-section">
+          <div className="library-section-header">
+            <h3>Active Assessments</h3>
+            <span>{assessments.length}</span>
+          </div>
+          <div className="library-grid">
+            {assessments.map(assessment => (
+              <AssessmentCard
+                key={assessment.id}
+                assessment={assessment}
+                isCurrent={assessment.id === currentAssessmentId}
+                onOpen={onOpen}
+                onRename={onRename}
+                onArchive={onArchive}
+                onRestore={onRestore}
+              />
+            ))}
+          </div>
+        </section>
+      )}
 
       {archivedAssessments.length > 0 && (
         <section className="library-section">

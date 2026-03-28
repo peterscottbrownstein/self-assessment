@@ -13,11 +13,9 @@ const STORAGE_KEY = 'doe-self-assessment-library';
 const LEGACY_STORAGE_KEY = 'doe-self-assessment';
 
 function buildDefaultLibrary() {
-  const builtinAssessment = createBuiltinAssessmentRecord();
-
   return {
-    assessments: [builtinAssessment],
-    currentAssessmentId: builtinAssessment.id,
+    assessments: [],
+    currentAssessmentId: null,
   };
 }
 
@@ -46,15 +44,11 @@ function normalizeLibrary(candidateLibrary) {
     })
     .filter(Boolean);
 
-  if (assessments.length === 0) {
-    return buildDefaultLibrary();
-  }
-
   const currentAssessmentId = assessments.some(
     assessment => assessment.id === candidateLibrary.currentAssessmentId
   )
     ? candidateLibrary.currentAssessmentId
-    : assessments[0].id;
+    : assessments[0]?.id ?? null;
 
   return {
     assessments,
@@ -158,7 +152,7 @@ export function useAssessment() {
 
   const currentAssessment = library.assessments.find(
     assessment => assessment.id === library.currentAssessmentId
-  ) ?? library.assessments[0];
+  ) ?? null;
 
   const openAssessment = useCallback((assessmentId) => {
     setLibrary(currentLibrary => {
@@ -364,7 +358,7 @@ export function useAssessment() {
 
   return {
     assessments: library.assessments,
-    currentAssessmentId: currentAssessment.id,
+    currentAssessmentId: currentAssessment?.id ?? null,
     currentAssessment,
     justSaved,
     openAssessment,
