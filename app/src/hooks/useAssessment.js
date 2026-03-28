@@ -87,11 +87,15 @@ function loadLibrary() {
       return normalizeLibrary(JSON.parse(raw));
     }
   } catch {
-    // Fall back to the built-in defaults if stored data is invalid.
+    return buildDefaultLibrary();
   }
 
-  const migrated = migrateLegacyState();
-  return migrated ? normalizeLibrary(migrated) : buildDefaultLibrary();
+  try {
+    const migrated = migrateLegacyState();
+    return migrated ? normalizeLibrary(migrated) : buildDefaultLibrary();
+  } catch {
+    return buildDefaultLibrary();
+  }
 }
 
 export function useAssessment() {
@@ -117,7 +121,11 @@ export function useAssessment() {
       ),
     };
 
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(persistedLibrary));
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(persistedLibrary));
+    } catch {
+      // localStorage unavailable (e.g. private browsing) — continue in-memory only.
+    }
     setLibrary(persistedLibrary);
     showSavedIndicator();
   }, [showSavedIndicator]);
