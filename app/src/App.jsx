@@ -260,14 +260,15 @@ export default function App() {
         actions={(
           <>
             <button className="btn btn-save" onClick={saveNow}>Save</button>
-            <button className="btn btn-import" onClick={() => handleRenameAssessment()}>Rename</button>
+            {/* Desktop: individual buttons */}
+            <button className="btn btn-import header-btn-secondary" onClick={() => handleRenameAssessment()}>Rename</button>
             {currentAssessment.source !== 'builtin' && (
-              <button className="btn btn-reset" onClick={() => handleArchiveAssessment()}>
+              <button className="btn btn-reset header-btn-secondary" onClick={() => handleArchiveAssessment()}>
                 Archive
               </button>
             )}
-            <button className="btn btn-import" onClick={() => jsonImportRef.current?.click()}>Import Data</button>
-            <details className="export-menu">
+            <button className="btn btn-import header-btn-secondary" onClick={() => jsonImportRef.current?.click()}>Import Data</button>
+            <details className="export-menu header-btn-secondary">
               <summary className="btn btn-export">Export</summary>
               <div className="export-menu-list">
                 <button
@@ -293,7 +294,66 @@ export default function App() {
                 </button>
               </div>
             </details>
-            <button className="btn btn-reset" onClick={handleReset}>Reset</button>
+            <button className="btn btn-reset header-btn-secondary" onClick={handleReset}>Reset</button>
+            {/* Mobile: overflow menu */}
+            <details className="export-menu header-overflow-menu">
+              <summary className="btn btn-import">More</summary>
+              <div className="export-menu-list">
+                <button
+                  type="button"
+                  className="export-menu-item"
+                  onClick={event => { event.currentTarget.closest('details')?.removeAttribute('open'); handleRenameAssessment(); }}
+                >
+                  Rename
+                </button>
+                {currentAssessment.source !== 'builtin' && (
+                  <button
+                    type="button"
+                    className="export-menu-item"
+                    onClick={event => { event.currentTarget.closest('details')?.removeAttribute('open'); handleArchiveAssessment(); }}
+                  >
+                    Archive
+                  </button>
+                )}
+                <button
+                  type="button"
+                  className="export-menu-item"
+                  onClick={event => { event.currentTarget.closest('details')?.removeAttribute('open'); jsonImportRef.current?.click(); }}
+                >
+                  Import Data
+                </button>
+                <div className="export-menu-divider" />
+                <button
+                  type="button"
+                  className="export-menu-item"
+                  onClick={event => handleExport(() => exportAssessmentData(currentAssessment), event)}
+                >
+                  Export: JSON backup
+                </button>
+                <button
+                  type="button"
+                  className="export-menu-item"
+                  onClick={event => handleExport(() => exportMarkdown(currentAssessment), event)}
+                >
+                  Export: Markdown
+                </button>
+                <button
+                  type="button"
+                  className="export-menu-item"
+                  onClick={event => handleExport(() => exportCsv(currentAssessment), event)}
+                >
+                  Export: CSV
+                </button>
+                <div className="export-menu-divider" />
+                <button
+                  type="button"
+                  className="export-menu-item export-menu-item-danger"
+                  onClick={event => { event.currentTarget.closest('details')?.removeAttribute('open'); handleReset(); }}
+                >
+                  Reset
+                </button>
+              </div>
+            </details>
           </>
         )}
       />

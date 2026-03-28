@@ -99,6 +99,20 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
 .export-menu-item:hover {
   background: #f4f7fb;
 }
+.export-menu-item-danger {
+  color: #c0392b;
+}
+.export-menu-item-danger:hover {
+  background: #fdf2f2;
+}
+.export-menu-divider {
+  height: 1px;
+  background: var(--border);
+  margin: 4px 0;
+}
+.header-overflow-menu {
+  display: none;
+}
 .save-indicator { font-size: 0.75rem; color: #68d391; opacity: 0; transition: opacity 0.4s; }
 .save-indicator.show { opacity: 1; }
 .visually-hidden {
@@ -697,6 +711,14 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
 
   .header-actions {
     width: 100%;
+  }
+
+  .header-btn-secondary {
+    display: none;
+  }
+
+  .header-overflow-menu {
+    display: block;
   }
 
   .library-hero {
