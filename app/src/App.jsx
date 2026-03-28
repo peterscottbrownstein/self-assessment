@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { Routes, Route, useNavigate, useParams } from 'react-router-dom';
 import { useAssessment } from './hooks/useAssessment';
 import { downloadSampleCsv, exportAssessmentData, exportCsv, exportMarkdown } from './utils/export';
 import { buildAssessmentFromCsv, buildDefaultAssessmentTitle } from './utils/csv';
@@ -18,11 +19,30 @@ function waitForNextPaint() {
   });
 }
 
+// Syncs the URL :id param to the active assessment on load/refresh.
+function AssessmentSync({ assessments, currentAssessmentId, openAssessment, children }) {
+  const { id } = useParams();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    const exists = assessments.some(a => a.id === id);
+    if (!exists) {
+      navigate('/', { replace: true });
+      return;
+    }
+    if (id !== currentAssessmentId) {
+      openAssessment(id);
+    }
+  }, [id, assessments, currentAssessmentId, openAssessment, navigate]);
+
+  return children;
+}
+
 export default function App() {
   const jsonImportRef = useRef(null);
   const csvImportRef = useRef(null);
   const toastTimersRef = useRef(new Map());
-  const [view, setView] = useState('library');
+  const navigate = useNavigate();
   const [busyMessage, setBusyMessage] = useState('');
   const [toasts, setToasts] = useState([]);
   const [showArchived, setShowArchived] = useState(false);
@@ -95,7 +115,7 @@ export default function App() {
 
   function handleOpenAssessment(assessmentId) {
     openAssessment(assessmentId);
-    setView('assessment');
+    navigate(`/assessment/${assessmentId}`);
   }
 
   function handleRenameAssessment(assessmentId = currentAssessment.id) {
@@ -120,7 +140,7 @@ export default function App() {
     try {
       archiveAssessment(assessmentId);
       if (assessmentId === currentAssessment.id) {
-        setView('library');
+        navigate('/');
       }
       showToast(`"${assessment.title}" is now in the archived list.`, 'success', 'Assessment archived');
     } catch (error) {
@@ -174,7 +194,7 @@ export default function App() {
       const importedAssessment = buildAssessmentFromCsv(await file.text(), file.name, {
         title: nextTitle,
       });
-      createAssessment({
+      const newId = createAssessment({
         title: importedAssessment.title,
         template: importedAssessment.template,
         state: importedAssessment.state,
@@ -182,7 +202,7 @@ export default function App() {
         source: 'csv',
       });
       setUploadTitle('');
-      setView('assessment');
+      navigate(`/assessment/${newId}`);
       showToast(`"${importedAssessment.title}" is ready to review.`, 'success', 'Assessment created');
     } catch (error) {
       showToast(error instanceof Error ? error.message : 'Unable to create an assessment from that CSV.', 'error', 'CSV upload failed');
@@ -201,199 +221,207 @@ export default function App() {
     event.currentTarget.closest('details')?.removeAttribute('open');
   }
 
-  if (view === 'library') {
-    return (
-      <>
-        <Header
-          title="Assessment Library"
-          subtitle={`${activeAssessments.length} active assessments${archivedAssessments.length ? ` | ${archivedAssessments.length} archived` : ''}`}
-          actions={(
-            <button className="btn btn-data" onClick={() => csvImportRef.current?.click()} disabled={isBusy}>
-              {isBusy ? 'Uploading...' : 'New from CSV'}
-            </button>
-          )}
-        />
-        <input
-          ref={csvImportRef}
-          className="visually-hidden"
-          type="file"
-          accept=".csv,text/csv"
-          onChange={handleCreateFromCsv}
-        />
-        <AssessmentLibrary
-          assessments={activeAssessments}
-          archivedAssessments={archivedAssessments}
-          currentAssessmentId={currentAssessment.id}
-          uploadTitle={uploadTitle}
-          onUploadTitleChange={setUploadTitle}
-          onOpen={handleOpenAssessment}
-          onRename={handleRenameAssessment}
-          onArchive={handleArchiveAssessment}
-          onRestore={handleRestoreAssessment}
-          onCreate={() => csvImportRef.current?.click()}
-          isUploading={isBusy}
-          showArchived={showArchived}
-          onToggleArchived={() => setShowArchived(current => !current)}
-          onDownloadSample={handleSampleDownload}
-        />
-        {isBusy && (
-          <div className="app-overlay" role="status" aria-live="polite">
-            <div className="app-overlay-card">
-              <div className="loading-spinner" />
-              <p>{busyMessage}</p>
-            </div>
-          </div>
-        )}
-        <ToastStack toasts={toasts} onDismiss={dismissToast} />
-      </>
-    );
-  }
+  const overlay = isBusy && (
+    <div className="app-overlay" role="status" aria-live="polite">
+      <div className="app-overlay-card">
+        <div className="loading-spinner" />
+        <p>{busyMessage}</p>
+      </div>
+    </div>
+  );
 
   return (
-    <>
-      <Header
-        title={currentAssessment.title}
-        subtitle={currentAssessment.template.subtitle || 'Custom assessment'}
-        savedAt={currentAssessment.savedAt}
-        justSaved={justSaved}
-        onBack={() => setView('library')}
-        actions={(
+    <Routes>
+      <Route
+        path="/"
+        element={(
           <>
-            <button className="btn btn-save" onClick={saveNow}>Save</button>
-            {/* Desktop: individual buttons */}
-            <button className="btn btn-import header-btn-secondary" onClick={() => handleRenameAssessment()}>Rename</button>
-            {currentAssessment.source !== 'builtin' && (
-              <button className="btn btn-reset header-btn-secondary" onClick={() => handleArchiveAssessment()}>
-                Archive
-              </button>
-            )}
-            <button className="btn btn-import header-btn-secondary" onClick={() => jsonImportRef.current?.click()}>Import Data</button>
-            <details className="export-menu header-btn-secondary">
-              <summary className="btn btn-export">Export</summary>
-              <div className="export-menu-list">
-                <button
-                  type="button"
-                  className="export-menu-item"
-                  onClick={event => handleExport(() => exportAssessmentData(currentAssessment), event)}
-                >
-                  JSON backup
+            <Header
+              title="Assessment Library"
+              subtitle={`${activeAssessments.length} active assessments${archivedAssessments.length ? ` | ${archivedAssessments.length} archived` : ''}`}
+              actions={(
+                <button className="btn btn-data" onClick={() => csvImportRef.current?.click()} disabled={isBusy}>
+                  {isBusy ? 'Uploading...' : 'New from CSV'}
                 </button>
-                <button
-                  type="button"
-                  className="export-menu-item"
-                  onClick={event => handleExport(() => exportMarkdown(currentAssessment), event)}
-                >
-                  Markdown
-                </button>
-                <button
-                  type="button"
-                  className="export-menu-item"
-                  onClick={event => handleExport(() => exportCsv(currentAssessment), event)}
-                >
-                  CSV for import
-                </button>
-              </div>
-            </details>
-            <button className="btn btn-reset header-btn-secondary" onClick={handleReset}>Reset</button>
-            {/* Mobile: overflow menu */}
-            <details className="export-menu header-overflow-menu">
-              <summary className="btn btn-import">More</summary>
-              <div className="export-menu-list">
-                <button
-                  type="button"
-                  className="export-menu-item"
-                  onClick={event => { event.currentTarget.closest('details')?.removeAttribute('open'); handleRenameAssessment(); }}
-                >
-                  Rename
-                </button>
-                {currentAssessment.source !== 'builtin' && (
-                  <button
-                    type="button"
-                    className="export-menu-item"
-                    onClick={event => { event.currentTarget.closest('details')?.removeAttribute('open'); handleArchiveAssessment(); }}
-                  >
-                    Archive
-                  </button>
-                )}
-                <button
-                  type="button"
-                  className="export-menu-item"
-                  onClick={event => { event.currentTarget.closest('details')?.removeAttribute('open'); jsonImportRef.current?.click(); }}
-                >
-                  Import Data
-                </button>
-                <div className="export-menu-divider" />
-                <button
-                  type="button"
-                  className="export-menu-item"
-                  onClick={event => handleExport(() => exportAssessmentData(currentAssessment), event)}
-                >
-                  Export: JSON backup
-                </button>
-                <button
-                  type="button"
-                  className="export-menu-item"
-                  onClick={event => handleExport(() => exportMarkdown(currentAssessment), event)}
-                >
-                  Export: Markdown
-                </button>
-                <button
-                  type="button"
-                  className="export-menu-item"
-                  onClick={event => handleExport(() => exportCsv(currentAssessment), event)}
-                >
-                  Export: CSV
-                </button>
-                <div className="export-menu-divider" />
-                <button
-                  type="button"
-                  className="export-menu-item export-menu-item-danger"
-                  onClick={event => { event.currentTarget.closest('details')?.removeAttribute('open'); handleReset(); }}
-                >
-                  Reset
-                </button>
-              </div>
-            </details>
+              )}
+            />
+            <input
+              ref={csvImportRef}
+              className="visually-hidden"
+              type="file"
+              accept=".csv,text/csv"
+              onChange={handleCreateFromCsv}
+            />
+            <AssessmentLibrary
+              assessments={activeAssessments}
+              archivedAssessments={archivedAssessments}
+              currentAssessmentId={currentAssessment.id}
+              uploadTitle={uploadTitle}
+              onUploadTitleChange={setUploadTitle}
+              onOpen={handleOpenAssessment}
+              onRename={handleRenameAssessment}
+              onArchive={handleArchiveAssessment}
+              onRestore={handleRestoreAssessment}
+              onCreate={() => csvImportRef.current?.click()}
+              isUploading={isBusy}
+              showArchived={showArchived}
+              onToggleArchived={() => setShowArchived(current => !current)}
+              onDownloadSample={handleSampleDownload}
+            />
+            {overlay}
+            <ToastStack toasts={toasts} onDismiss={dismissToast} />
           </>
         )}
       />
-      <input
-        ref={jsonImportRef}
-        className="visually-hidden"
-        type="file"
-        accept=".json,application/json"
-        onChange={handleImportFile}
+      <Route
+        path="/assessment/:id"
+        element={(
+          <AssessmentSync
+            assessments={assessments}
+            currentAssessmentId={currentAssessment.id}
+            openAssessment={openAssessment}
+          >
+            <>
+              <Header
+                title={currentAssessment.title}
+                subtitle={currentAssessment.template.subtitle || 'Custom assessment'}
+                savedAt={currentAssessment.savedAt}
+                justSaved={justSaved}
+                onBack={() => navigate('/')}
+                actions={(
+                  <>
+                    <button className="btn btn-save" onClick={saveNow}>Save</button>
+                    {/* Desktop: individual buttons */}
+                    <button className="btn btn-import header-btn-secondary" onClick={() => handleRenameAssessment()}>Rename</button>
+                    {currentAssessment.source !== 'builtin' && (
+                      <button className="btn btn-reset header-btn-secondary" onClick={() => handleArchiveAssessment()}>
+                        Archive
+                      </button>
+                    )}
+                    <button className="btn btn-import header-btn-secondary" onClick={() => jsonImportRef.current?.click()}>Import Data</button>
+                    <details className="export-menu header-btn-secondary">
+                      <summary className="btn btn-export">Export</summary>
+                      <div className="export-menu-list">
+                        <button
+                          type="button"
+                          className="export-menu-item"
+                          onClick={event => handleExport(() => exportAssessmentData(currentAssessment), event)}
+                        >
+                          JSON backup
+                        </button>
+                        <button
+                          type="button"
+                          className="export-menu-item"
+                          onClick={event => handleExport(() => exportMarkdown(currentAssessment), event)}
+                        >
+                          Markdown
+                        </button>
+                        <button
+                          type="button"
+                          className="export-menu-item"
+                          onClick={event => handleExport(() => exportCsv(currentAssessment), event)}
+                        >
+                          CSV for import
+                        </button>
+                      </div>
+                    </details>
+                    <button className="btn btn-reset header-btn-secondary" onClick={handleReset}>Reset</button>
+                    {/* Mobile: overflow menu */}
+                    <details className="export-menu header-overflow-menu">
+                      <summary className="btn btn-import">More</summary>
+                      <div className="export-menu-list">
+                        <button
+                          type="button"
+                          className="export-menu-item"
+                          onClick={event => { event.currentTarget.closest('details')?.removeAttribute('open'); handleRenameAssessment(); }}
+                        >
+                          Rename
+                        </button>
+                        {currentAssessment.source !== 'builtin' && (
+                          <button
+                            type="button"
+                            className="export-menu-item"
+                            onClick={event => { event.currentTarget.closest('details')?.removeAttribute('open'); handleArchiveAssessment(); }}
+                          >
+                            Archive
+                          </button>
+                        )}
+                        <button
+                          type="button"
+                          className="export-menu-item"
+                          onClick={event => { event.currentTarget.closest('details')?.removeAttribute('open'); jsonImportRef.current?.click(); }}
+                        >
+                          Import Data
+                        </button>
+                        <div className="export-menu-divider" />
+                        <button
+                          type="button"
+                          className="export-menu-item"
+                          onClick={event => handleExport(() => exportAssessmentData(currentAssessment), event)}
+                        >
+                          Export: JSON backup
+                        </button>
+                        <button
+                          type="button"
+                          className="export-menu-item"
+                          onClick={event => handleExport(() => exportMarkdown(currentAssessment), event)}
+                        >
+                          Export: Markdown
+                        </button>
+                        <button
+                          type="button"
+                          className="export-menu-item"
+                          onClick={event => handleExport(() => exportCsv(currentAssessment), event)}
+                        >
+                          Export: CSV
+                        </button>
+                        <div className="export-menu-divider" />
+                        <button
+                          type="button"
+                          className="export-menu-item export-menu-item-danger"
+                          onClick={event => { event.currentTarget.closest('details')?.removeAttribute('open'); handleReset(); }}
+                        >
+                          Reset
+                        </button>
+                      </div>
+                    </details>
+                  </>
+                )}
+              />
+              <input
+                ref={jsonImportRef}
+                className="visually-hidden"
+                type="file"
+                accept=".json,application/json"
+                onChange={handleImportFile}
+              />
+              <SummaryBar
+                assessmentState={currentAssessment.state}
+                items={summaryItems}
+                showAverage
+              />
+              <main className="main">
+                <ScaleLegend />
+                {currentAssessment.template.pillars.map(pillar => (
+                  <Pillar
+                    key={pillar.id}
+                    pillar={pillar}
+                    assessmentState={currentAssessment.state}
+                    startIndex={pillarStartIndexes[pillar.id]}
+                    totalResponsibilities={totalResponsibilities}
+                    summaryText={currentAssessment.summary.pillars[pillar.id] ?? ''}
+                    onRate={setRating}
+                    onNote={setNote}
+                    onSummaryChange={value => setPillarSummary(pillar.id, value)}
+                  />
+                ))}
+              </main>
+              {overlay}
+              <ToastStack toasts={toasts} onDismiss={dismissToast} />
+            </>
+          </AssessmentSync>
+        )}
       />
-      <SummaryBar
-        assessmentState={currentAssessment.state}
-        items={summaryItems}
-        showAverage
-      />
-      <main className="main">
-        <ScaleLegend />
-        {currentAssessment.template.pillars.map(pillar => (
-          <Pillar
-            key={pillar.id}
-            pillar={pillar}
-            assessmentState={currentAssessment.state}
-            startIndex={pillarStartIndexes[pillar.id]}
-            totalResponsibilities={totalResponsibilities}
-            summaryText={currentAssessment.summary.pillars[pillar.id] ?? ''}
-            onRate={setRating}
-            onNote={setNote}
-            onSummaryChange={value => setPillarSummary(pillar.id, value)}
-          />
-        ))}
-      </main>
-      {isBusy && (
-        <div className="app-overlay" role="status" aria-live="polite">
-          <div className="app-overlay-card">
-            <div className="loading-spinner" />
-            <p>{busyMessage}</p>
-          </div>
-        </div>
-      )}
-      <ToastStack toasts={toasts} onDismiss={dismissToast} />
-    </>
+    </Routes>
   );
 }
