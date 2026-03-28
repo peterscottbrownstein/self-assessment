@@ -256,7 +256,7 @@ export default function App() {
             <AssessmentLibrary
               assessments={activeAssessments}
               archivedAssessments={archivedAssessments}
-              currentAssessmentId={currentAssessment.id}
+              currentAssessmentId={currentAssessment?.id ?? null}
               uploadTitle={uploadTitle}
               onUploadTitleChange={setUploadTitle}
               onOpen={handleOpenAssessment}
@@ -279,10 +279,10 @@ export default function App() {
         element={(
           <AssessmentSync
             assessments={assessments}
-            currentAssessmentId={currentAssessment.id}
+            currentAssessmentId={currentAssessment?.id ?? null}
             openAssessment={openAssessment}
           >
-            <>
+            {currentAssessment && <>
               <Header
                 title={currentAssessment.title}
                 subtitle={currentAssessment.template.subtitle || 'Custom assessment'}
@@ -419,7 +419,7 @@ export default function App() {
               </main>
               {overlay}
               <ToastStack toasts={toasts} onDismiss={dismissToast} />
-            </>
+            </>}
           </AssessmentSync>
         )}
       />
