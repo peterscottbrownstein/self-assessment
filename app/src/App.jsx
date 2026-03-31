@@ -3,7 +3,7 @@ import { Routes, Route, useNavigate, useParams } from 'react-router-dom';
 import { useAssessment } from './hooks/useAssessment';
 import { downloadSampleCsv, exportAssessmentData, exportCsv, exportMarkdown } from './utils/export';
 import { buildAssessmentFromCsv, buildDefaultAssessmentTitle } from './utils/csv';
-import { buildPillarStartIndexes, flattenItems, getTotalResponsibilities } from './utils/assessmentModel';
+import { APP_ID, buildPillarStartIndexes, flattenItems, getTotalResponsibilities } from './utils/assessmentModel';
 import { Header } from './components/Header';
 import { SummaryBar } from './components/SummaryBar';
 import { ScaleLegend } from './components/ScaleLegend';
@@ -41,6 +41,7 @@ function AssessmentSync({ assessments, currentAssessmentId, openAssessment, chil
 
 export default function App() {
   const jsonImportRef = useRef(null);
+  const csvAssessmentImportRef = useRef(null);
   const csvImportRef = useRef(null);
   const toastTimersRef = useRef(new Map());
   const navigate = useNavigate();
@@ -182,6 +183,25 @@ export default function App() {
     }
   }
 
+  async function handleImportAssessmentCsv(event) {
+    const file = event.target.files?.[0];
+    event.target.value = '';
+
+    if (!file) return;
+
+    try {
+      setBusyMessage('Importing CSV data...');
+      await waitForNextPaint();
+      const parsed = buildAssessmentFromCsv(await file.text(), file.name, {});
+      importState({ app: APP_ID, assessment: { state: parsed.state, summary: parsed.summary } });
+      showToast('CSV data imported successfully.', 'success', 'Data imported');
+    } catch (error) {
+      showToast(error instanceof Error ? error.message : 'Unable to import that CSV.', 'error', 'Import failed');
+    } finally {
+      setBusyMessage('');
+    }
+  }
+
   async function handleCreateFromCsv(event) {
     const file = event.target.files?.[0];
     event.target.value = '';
@@ -292,42 +312,6 @@ export default function App() {
                 actions={(
                   <>
                     <button className="btn btn-save" onClick={saveNow}>Save</button>
-                    {/* Desktop: individual buttons */}
-                    <button className="btn btn-import header-btn-secondary" onClick={() => handleRenameAssessment()}>Rename</button>
-                    {currentAssessment.source !== 'builtin' && (
-                      <button className="btn btn-reset header-btn-secondary" onClick={() => handleArchiveAssessment()}>
-                        Archive
-                      </button>
-                    )}
-                    <button className="btn btn-import header-btn-secondary" onClick={() => jsonImportRef.current?.click()}>Import Data</button>
-                    <details className="export-menu header-btn-secondary">
-                      <summary className="btn btn-export">Export</summary>
-                      <div className="export-menu-list">
-                        <button
-                          type="button"
-                          className="export-menu-item"
-                          onClick={event => handleExport(() => exportAssessmentData(currentAssessment), event)}
-                        >
-                          JSON backup
-                        </button>
-                        <button
-                          type="button"
-                          className="export-menu-item"
-                          onClick={event => handleExport(() => exportMarkdown(currentAssessment), event)}
-                        >
-                          Markdown
-                        </button>
-                        <button
-                          type="button"
-                          className="export-menu-item"
-                          onClick={event => handleExport(() => exportCsv(currentAssessment), event)}
-                        >
-                          CSV for import
-                        </button>
-                      </div>
-                    </details>
-                    <button className="btn btn-reset header-btn-secondary" onClick={handleReset}>Reset</button>
-                    {/* Mobile: overflow menu */}
                     <details className="export-menu header-overflow-menu">
                       <summary className="btn btn-import">More</summary>
                       <div className="export-menu-list">
@@ -347,12 +331,20 @@ export default function App() {
                             Archive
                           </button>
                         )}
+                        <div className="export-menu-divider" />
                         <button
                           type="button"
                           className="export-menu-item"
                           onClick={event => { event.currentTarget.closest('details')?.removeAttribute('open'); jsonImportRef.current?.click(); }}
                         >
-                          Import Data
+                          Import: JSON backup
+                        </button>
+                        <button
+                          type="button"
+                          className="export-menu-item"
+                          onClick={event => { event.currentTarget.closest('details')?.removeAttribute('open'); csvAssessmentImportRef.current?.click(); }}
+                        >
+                          Import: CSV
                         </button>
                         <div className="export-menu-divider" />
                         <button
@@ -395,6 +387,13 @@ export default function App() {
                 type="file"
                 accept=".json,application/json"
                 onChange={handleImportFile}
+              />
+              <input
+                ref={csvAssessmentImportRef}
+                className="visually-hidden"
+                type="file"
+                accept=".csv,text/csv"
+                onChange={handleImportAssessmentCsv}
               />
               <SummaryBar
                 assessmentState={currentAssessment.state}
